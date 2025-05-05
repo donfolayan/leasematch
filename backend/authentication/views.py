@@ -1,8 +1,7 @@
 from django.conf import settings
-from .models import Note
 from django.shortcuts import render
 from django.contrib.auth import get_user_model
-from .serializer import NoteSerializer, UserRegistrationSerializer
+from .serializer import UserRegistrationSerializer
 
 User = get_user_model()
 
@@ -113,13 +112,3 @@ def register(request):
         serializer.save()
         return Response(serializer.data)
     return Response({'success': False, 'errors': serializer.errors})
-
-
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_notes(request):
-    user = request.user
-    notes = Note.objects.filter(owner=user)
-    serializer = NoteSerializer(notes, many=True)
-    return Response(serializer.data)

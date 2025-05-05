@@ -11,7 +11,3 @@ class CustomUser(AbstractUser):
         ('agent', 'Agent'),
     )
     user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default='tenant')
-
-class Note(models.Model):
-    description = models.CharField(max_length=300)
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='note', on_delete=models.CASCADE)

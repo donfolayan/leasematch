@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import get_notes, CustomTokenObtainPairView, CustomRefreshTokenView, logout, is_authenticated, register
+from .views import CustomTokenObtainPairView, CustomRefreshTokenView, logout, is_authenticated, register
 
 urlpatterns = [
     path('token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
@@ -7,5 +7,4 @@ urlpatterns = [
     path('logout/', logout, name='logout'),
     path('is_authenticated/', is_authenticated, name='is_authenticated'),
     path('register/', register, name='register'),
-    path('notes/', get_notes, name='get_notes'),
 ]
