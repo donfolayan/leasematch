@@ -2,3 +2,5 @@ django
 djangorestframework
 django-cors-headers
 djangorestframework-simplejwt
+social-auth-app-django
+python-decouple
