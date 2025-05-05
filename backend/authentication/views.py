@@ -1,8 +1,10 @@
+from django.conf import settings
 from .models import Note
 from django.shortcuts import render
-from django.contrib.auth.models import User
-from .serializer import NoteSerializer
+from django.contrib.auth import get_user_model
+from .serializer import NoteSerializer, UserRegistrationSerializer
 
+User = get_user_model()
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -100,6 +102,17 @@ def logout(request):
 @permission_classes([IsAuthenticated])
 def is_authenticated(request):
     return Response({'is_authenticated': True})
+
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register(request):
+    serializer = UserRegistrationSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    return Response({'success': False, 'errors': serializer.errors})
 
 
 
