@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 from decouple import config
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -21,12 +22,37 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-dx=#+!s09_5p%ji9oi55smkj3x0vt0sd+z9u*gv-q^&)@yr-mi'
+SECRET_KEY = config('DJANGO_SECRET_KEY', default=None, cast=str)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DJANGO_DEBUG', default=0, cast=bool)
 
 ALLOWED_HOSTS = []
+
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
+
+# Email settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = config('EMAIL_HOST', default='smtp.google.com')
+EMAIL_PORT = config('EMAIL_PORT', cast=int, default='587')
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', cast=bool, default=1)
+EMAIL_USE_SSL = config('EMAIL_USE_SSL', cast=bool, default=0)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='Donald' ,cast=str)
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+
+DEFAULT_FROM_EMAIL = 'donfolayan@demomailtrap.co'  # Replace with a valid email address
+
+# 500 Error settings
+ADMIN_USERNAME = config('ADMIN_USERNAME', default='admin')
+ADMIN_EMAIL = config('ADMIN_EMAIL', default=None)
+
+ADMINS = []
+MANAGERS = []
+
+if all([ADMIN_USERNAME, ADMIN_EMAIL]):
+    ADMINS.append((ADMIN_USERNAME, ADMIN_EMAIL))
+    MANAGERS=ADMINS
 
 
 # Application definition
@@ -57,7 +83,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # Social Auth Middleware
-    'social_django.middleware.SocialAuthExceptionMiddleware'
+    'social_django.middleware.SocialAuthExceptionMiddleware',
 ]
 
 REST_FRAMEWORK = {
