@@ -7,7 +7,9 @@ from .views import (
     register, 
     social_auth, 
     verify_otp, 
-    resend_otp
+    resend_otp,
+    forgot_password,
+    reset_password,
     )
 
 urlpatterns = [
@@ -20,4 +22,6 @@ urlpatterns = [
     path('social/', include('social_django.urls', namespace='social')),
     path('register/verify_otp/', verify_otp, name='verify_otp'),
     path('register/resend_otp/', resend_otp, name='resend_otp'),
+    path('forgot_password/', forgot_password, name='forgot_password'),
+    path('reset_password/<uidb64>/<token>/', reset_password, name='reset_password'),
 ]

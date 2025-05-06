@@ -4,7 +4,6 @@ from social_django.utils import load_strategy, load_backend
 from django.views.decorators.csrf import csrf_exempt
 from social_core.exceptions import AuthException, MissingBackend
 
-from django.utils.timezone import now
 import pyotp
 from django.core.cache import cache
 from .models import CustomUser
@@ -22,6 +21,11 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+
+from django.urls import reverse
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
 
 
 User = get_user_model()
@@ -108,12 +112,12 @@ def logout(request):
         return res
     except:
         return Response({'success': False})
-    
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def is_authenticated(request):
     return Response({'is_authenticated': True})
-
 
 
 @api_view(['POST'])
@@ -205,6 +209,69 @@ def resend_otp(request):
         return Response({'success': True, 'message': 'New OTP sent successfully'})
     except CustomUser.DoesNotExist:
         return Response({'success': False, 'error': 'User not found'}, status=404)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def forgot_password(request):
+    email = request.data.get('email')
+
+    if not email:
+        return Response({'success': False, 'error': 'Email is required'}, status=400)
+
+    try:
+        user = CustomUser.objects.get(email=email)
+
+        # Generate password reset token
+        token = PasswordResetTokenGenerator().make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+        # Build the password reset link
+        reset_url = request.build_absolute_uri(
+            reverse('reset_password', kwargs={'uidb64': uid, 'token': token})
+        )
+
+        # Send email with the reset link
+        send_mail(
+            subject='Password Reset Request',
+            message=f'Click the link to reset your password: {reset_url}',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+        )
+
+        return Response({'success': True, 'message': 'Password reset email sent successfully.'})
+
+    except CustomUser.DoesNotExist:
+        return Response({'success': False, 'error': 'User with this email does not exist.'}, status=404)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def reset_password(request, uidb64, token):
+    try:
+        # Decode the user ID
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = CustomUser.objects.get(pk=uid)
+
+        # Validate the token
+        if not PasswordResetTokenGenerator().check_token(user, token):
+            return Response({'success': False, 'error': 'Invalid or expired token.'}, status=400)
+
+        # Get the new password from the request
+        new_password = request.data.get('new_password')
+        if not new_password:
+            return Response({'success': False, 'error': 'New password is required'}, status=400)
+
+        # Set the new password
+        user.set_password(new_password)
+        user.save()
+
+        return Response({'success': True, 'message': 'Password reset successfully.'})
+
+    except CustomUser.DoesNotExist:
+        return Response({'success': False, 'error': 'Invalid user or token.'}, status=404)
+    except Exception as e:
+        return Response({'success': False, 'error': str(e)}, status=500)
 
 
 @csrf_exempt
