@@ -1,124 +1,19 @@
 from django.contrib.auth import get_user_model
-from .serializer import UserRegistrationSerializer
-from social_django.utils import load_strategy, load_backend
-from django.views.decorators.csrf import csrf_exempt
-from social_core.exceptions import AuthException, MissingBackend
-
-import pyotp
-from django.core.cache import cache
-from .models import CustomUser
 from django.conf import settings
-from django.core.mail import send_mail
+from django.core.cache import cache
 from django.db import transaction
-
-
+from django.contrib.auth.hashers import check_password
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
-
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-)
-
-from django.urls import reverse
-from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.contrib.auth.tokens import PasswordResetTokenGenerator
-
+from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
+from backend.utils.email import send_email
+from backend.utils.otp import generate_otp
+from django.contrib.auth.tokens import default_token_generator
+from .models import CustomUser
+from .serializer import UserRegistrationSerializer
 
 User = get_user_model()
-
-class CustomTokenObtainPairView(TokenObtainPairView):
-    def post(self, request, *args, **kwargs):
-
-        try:
-            response = super().post(request, *args, **kwargs)
-            tokens = response.data
-
-            access_token = tokens.get('access')
-            refresh_token = tokens.get('refresh')
-
-            res = Response()
-            res.data = {'success': True}
-
-            res.set_cookie(
-                key='access_token',
-                value=access_token,
-                httponly=True,
-                secure=True,
-                samesite='None',
-                path='/',
-            )
-
-            res.set_cookie(
-                key='refresh_token',
-                value=refresh_token,
-                httponly=True,
-                secure=True,
-                samesite='None',
-                path='/',
-            )
-
-            return res
-        
-        except:
-            return Response({'success': False})
-        
-
-class CustomRefreshTokenView(TokenRefreshView):
-    def post(self, request, *args, **kwargs):
-
-        try:
-            refresh_token = request.COOKIES.get('refresh_token')
-            
-            request.data['refresh'] = refresh_token
-
-            response = super().post(request, *args, **kwargs)
-
-            tokens = response.data
-            access_token = tokens.get('access')
-            
-
-            res = Response()
-            res.data = {'refreshed': True}
-
-            res.set_cookie(
-                key='access_token',
-                value=access_token,
-                httponly=True,
-                secure=True,
-                samesite='None',
-                path='/',
-            )
-
-            return res
-        
-        except:
-            return Response({'refreshed': False})
-        
-
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def logout(request):
-    try:
-        res = Response()
-        res.data = {'success': True}
-
-        res.delete_cookie('access_token', path='/', samesite='None')
-        res.delete_cookie('refresh_token', path='/', samesite='None')
-
-        return res
-    except:
-        return Response({'success': False})
-
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def is_authenticated(request):
-    return Response({'is_authenticated': True})
-
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -132,18 +27,19 @@ def register(request):
             user.save()
 
             # Generate OTP
-            totp = pyotp.TOTP(pyotp.random_base32())
-            otp = totp.now() #Generate time-based OTP
-
-            cache.set(f'otp_{user.id}', otp, timeout=300)  # Store OTP in cache for 5 minutes
+            otp, expiration = generate_otp()
+            cache.set(f'otp_{user.id}', otp, timeout=expiration)
 
             # Send email
-            send_mail(
-                subject='Your OTP Code',
-                message=f'Your OTP code is {otp}. It will expire in 5 minutes.',
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-            )
+            try:
+                send_email(
+                    subject='Your OTP Code',
+                    message=f'Your OTP code is {otp}. It will expire in 5 minutes.',
+                    recipient_list=[user.email],
+                )
+            except Exception as e:
+                print(f"Email sending failed: {e}")
+                return Response({"success": False, "error":f"Failed to send email:{str(e)}"}, status=500)
 
             return Response({
                 'success': True,
@@ -151,8 +47,11 @@ def register(request):
                 'user_id': user.id
             })
         except Exception as e:
+            print(f"Error during registration: {e}")
             transaction.set_rollback(True)
             return Response({'success': False, 'error': str(e)}, status=500)
+    else:
+        print(f"Serializer errors: , {serializer.errors}")
     return Response({'success': False, 'errors': serializer.errors})
 
 
@@ -193,16 +92,13 @@ def resend_otp(request):
         user = CustomUser.objects.get(id=user_id)
 
         # Generate new OTP
-        totp = pyotp.TOTP(pyotp.random_base32())
-        otp = totp.now()  # Generate time-based OTP
-
-        cache.set(f'otp_{user.id}', otp, timeout=300)  # Store OTP in cache for 5 minutes
+        otp, expiration = generate_otp()
+        cache.set(f'otp_{user.id}', otp, timeout=expiration)
 
         # Send email
-        send_mail(
+        send_email(
             subject='Your OTP Code',
             message=f'Your new OTP code is {otp}. It will expire in 5 minutes.',
-            from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[user.email],
         )
 
@@ -222,20 +118,14 @@ def forgot_password(request):
     try:
         user = CustomUser.objects.get(email=email)
 
-        # Generate password reset token
-        token = PasswordResetTokenGenerator().make_token(user)
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-
-        # Build the password reset link
-        reset_url = request.build_absolute_uri(
-            reverse('reset_password', kwargs={'uidb64': uid, 'token': token})
-        )
+        # Generate otp
+        otp, expiration = generate_otp()
+        cache.set(f'otp_{user.id}', otp, timeout=expiration)  # Store OTP in cache for 5 minutes
 
         # Send email with the reset link
-        send_mail(
-            subject='Password Reset Request',
-            message=f'Click the link to reset your password: {reset_url}',
-            from_email=settings.DEFAULT_FROM_EMAIL,
+        send_email(
+            subject='Your Password Reset OTP',
+            message=f'Your OTP for password reset is {otp}. It will expire in 5 minutes.',
             recipient_list=[email],
         )
 
@@ -247,71 +137,86 @@ def forgot_password(request):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
-def reset_password(request, uidb64, token):
+def change_password(request):
+    user = request.user
+    current_password = request.data.get('current_password')
+    new_password = request.data.get('new_password')
+
+    if not current_password or not new_password:
+        return Response({'success': False, 'error': 'Missing current password or new password'}, status=400)
+    
+    #Verify current password
+    if not check_password(current_password, user.password):
+        return Response({'success': False, 'error': 'Current password is incorrect'}, status=400)
+    
+    user.set_password(new_password)
+    user.save()
+
+    # Invalidate all tokens for the user
+    OutstandingToken.objects.filter(user=user).delete()  
+
+    return Response({'success': True, 'message': 'Password changed successfully'})
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def verify_password_reset_otp(request):
+    email = request.data.get('email')
+    otp = request.data.get('otp')
+
+    if not email or not otp:
+        return Response({'success': False, 'error': 'Missing email or otp'}, status=400)
+
     try:
-        # Decode the user ID
-        uid = urlsafe_base64_decode(uidb64).decode()
-        user = CustomUser.objects.get(pk=uid)
+        user = CustomUser.objects.get(email=email)
+        cached_otp = cache.get(f'otp_{user.id}')
 
-        # Validate the token
-        if not PasswordResetTokenGenerator().check_token(user, token):
-            return Response({'success': False, 'error': 'Invalid or expired token.'}, status=400)
+        if cached_otp and cached_otp == str(otp):
+            # OTP is valid
+            return Response({'success': True, 'message': 'OTP verified successfully'})
+        else:
+            return Response({'success': False, 'error': 'Invalid or expired OTP'}, status=400)
 
-        # Get the new password from the request
-        new_password = request.data.get('new_password')
-        if not new_password:
-            return Response({'success': False, 'error': 'New password is required'}, status=400)
+    except CustomUser.DoesNotExist:
+        return Response({'success': False, 'error': 'User with this email does not exist.'}, status=404)
+    
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def reactivate_account(request):
+    user_id = request.data.get('user_id')
+    token = request.data.get('token')
 
-        # Set the new password
+    if not user_id or not token:
+        return Response({'success': False, 'error': 'Missing user_id or token'}, status=400)
+
+    try:
+        user = CustomUser.objects.get(id=user_id)
+        if default_token_generator.check_token(user, token):
+            user.is_active = True
+            user.save()
+            return Response({'success': True, 'message': 'Account reactivated successfully'})
+        else:
+            return Response({'success': False, 'error': 'Invalid token'}, status=400)
+    except CustomUser.DoesNotExist:
+        return Response({'success': False, 'error': 'User not found'}, status=404)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def reset_password(request):
+    email = request.data.get('email')
+    new_password = request.data.get('new_password')
+
+    if not email or not new_password:
+        return Response({'success': False, 'error': 'Missing email or new password'}, status=400)
+
+    try:
+        user = CustomUser.objects.get(email=email)
         user.set_password(new_password)
         user.save()
 
-        return Response({'success': True, 'message': 'Password reset successfully.'})
+        # Clear OTP from cache
+        cache.delete(f'otp_{user.id}')
 
+        return Response({'success': True, 'message': 'Password reset successfully'})
     except CustomUser.DoesNotExist:
-        return Response({'success': False, 'error': 'Invalid user or token.'}, status=404)
-    except Exception as e:
-        return Response({'success': False, 'error': str(e)}, status=500)
-
-
-@csrf_exempt
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def social_auth(request):
-    provider = request.data.get('provider')
-    access_token = request.data.get('access_token')
-
-    if not provider or not access_token:
-        return Response({'success': False, 'error': 'Missing provider or access token'}, status=400)
-    
-    try:
-        strategy = load_strategy(request)
-        backend = load_backend(strategy, provider, redirect_uri=None)
-        user = backend.do_auth(access_token)
-
-        if user and user.is_active:
-            #Generate a token for the user
-            refresh = RefreshToken.for_user(user)
-            return Response({
-                'success': True,
-                'access': str(refresh.access_token),
-                'refresh': str(refresh),
-                'user': {
-                    'id': user.id,
-                    'username': user.username,
-                    'email': user.email,
-                    'first_name': user.first_name,
-                    'last_name': user.last_name,
-                }
-            })
-        elif user and not user.is_active:
-            return Response({'success': False, 'error': 'User is inactive'}, status=403)
-        else:
-            return Response({'success': False, 'error': 'Authentication failed'}, status=401)
-            
-    except MissingBackend:
-        return Response({'success': False, 'error': 'Invalid provider'}, status=400)
-    except AuthException as e:
-        return Response({'success': False, 'error': str(e)}, status=400)
-    except Exception as e:
-        return Response({'success': False, 'error': str(e)}, status=500)
+        return Response({'success': False, 'error': 'User with this email does not exist.'}, status=404)

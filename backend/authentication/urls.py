@@ -1,27 +1,22 @@
 from django.urls import path, include
 from .views import (
-    CustomTokenObtainPairView, 
-    CustomRefreshTokenView, 
-    logout, 
-    is_authenticated, 
     register, 
-    social_auth, 
     verify_otp, 
     resend_otp,
     forgot_password,
     reset_password,
+    verify_password_reset_otp,
+    change_password,
+    reactivate_account,
     )
 
 urlpatterns = [
-    path('token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('token/refresh/', CustomRefreshTokenView.as_view(), name='token_refresh'),
-    path('logout/', logout, name='logout'),
-    path('is_authenticated/', is_authenticated, name='is_authenticated'),
     path('register/', register, name='register'),
-    path('social_auth/', social_auth, name='social_auth'),
-    path('social/', include('social_django.urls', namespace='social')),
     path('register/verify_otp/', verify_otp, name='verify_otp'),
     path('register/resend_otp/', resend_otp, name='resend_otp'),
     path('forgot_password/', forgot_password, name='forgot_password'),
-    path('reset_password/<uidb64>/<token>/', reset_password, name='reset_password'),
+    path('reset_password/', reset_password, name='reset_password'),
+    path('verify_password_reset/', verify_password_reset_otp, name='verify_password_reset_otp'),
+    path('change_password/', change_password, name='change_password'),
+    path('reactivate_account/', reactivate_account, name='reactivate_account'),
 ]
