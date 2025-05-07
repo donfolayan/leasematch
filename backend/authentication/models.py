@@ -3,7 +3,7 @@ from django.db import models
 from django.conf import settings
 from datetime import timedelta
 from django.contrib.auth.models import AbstractUser
-from social_django.models import UserSocialAuth
+# from social_django.models import UserSocialAuth
 from backend.utils.otp import generate_otp
 from django.utils.timezone import now
 
@@ -39,7 +39,7 @@ class ScheduledDeletion(models.Model):
     )
 
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    social_auth = models.OneToOneField(UserSocialAuth, on_delete=models.CASCADE, null=True, blank=True)
+    # social_auth = models.OneToOneField(UserSocialAuth, on_delete=models.CASCADE, null=True, blank=True)
     deletion_type = models.CharField(max_length=20, choices=DELETION_TYPE_CHOICES)
     scheduled_for = models.DateTimeField(default=default_scheduled_time)
     cancelled = models.BooleanField(default=False)
@@ -47,10 +47,10 @@ class ScheduledDeletion(models.Model):
     def __str__(self):
         if self.deletion_type == 'user':
             return f"Scheduled deletion for user {self.user.email} at {self.scheduled_for}"
-        elif self.deletion_type == 'social_auth':
-            if self.social_auth:
-                return f"Scheduled deletion for social auth {self.social_auth.provider} for {self.user.email} at {self.scheduled_for}"
-            else:
-                return f"Scheduled deletion for social auth for {self.user.email} at {self.scheduled_for}"
+        # elif self.deletion_type == 'social_auth':
+        #     if self.social_auth:
+        #         return f"Scheduled deletion for social auth {self.social_auth.provider} for {self.user.email} at {self.scheduled_for}"
+        #     else:
+        #         return f"Scheduled deletion for social auth for {self.user.email} at {self.scheduled_for}"
         elif self.deletion_type == 'inactive_user':
             return f"Scheduled deletion for inactive user {self.user.email} at {self.scheduled_for}"

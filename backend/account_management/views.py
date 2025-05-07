@@ -2,7 +2,7 @@ from backend.utils.default_scheduled_time import default_scheduled_time
 from backend.utils.email import send_email
 from backend.utils.deletions import schedule_deletion, cancel_user_scheduled_deletion, process_scheduled_user_deletions
 from authentication.models import ScheduledDeletion
-from social_django.models import UserSocialAuth
+# from social_django.models import UserSocialAuth
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response

@@ -1,11 +1,21 @@
+from .views import GoogleLogin
 from django.urls import path, include
-from .views import (
-    disconnect_social_account,
-    social_auth,
+from dj_rest_auth.registration.views import (
+    SocialAccountListView, SocialAccountDisconnectView,
 )
 
+
 urlpatterns = [
-    path('social/<str:provider>/', social_auth, name='social_auth'),
-    path('social/', include('social_django.urls', namespace='social')),
-    path('disconnect_social_account/', disconnect_social_account, name='disconnect_social_account'),
+    path('dj-rest-auth/', include('dj_rest_auth.urls')),
+    path('dj-rest-auth/google/', GoogleLogin.as_view(), name='google_login'),
+    path(
+        'socialaccounts/<int:pk>/disconnect/',
+        SocialAccountDisconnectView.as_view(),
+        name='social_account_disconnect'
+    ),
+    path(
+        'socialaccounts/',
+        SocialAccountListView.as_view(),
+        name='social_account_list'
+    ),
 ]

@@ -2,7 +2,7 @@ django
 djangorestframework
 django-cors-headers
 djangorestframework-simplejwt
-social-auth-app-django
+dj-rest-auth[with_social]
 python-decouple
 pyotp
 django-celery

@@ -10,7 +10,6 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('authentication', '0003_alter_customuser_id'),
-        ('social_django', '0016_alter_usersocialauth_extra_data'),
     ]
 
     operations = [
@@ -21,7 +20,6 @@ class Migration(migrations.Migration):
                 ('deletion_type', models.CharField(choices=[('user', 'User Account'), ('social_auth', 'Social Auth Account')], max_length=20)),
                 ('scheduled_time', models.DateTimeField(default=authentication.models.default_scheduled_time)),
                 ('cancelled', models.BooleanField(default=False)),
-                ('social_auth', models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='social_django.usersocialauth')),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
         ),
