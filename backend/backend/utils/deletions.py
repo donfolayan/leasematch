@@ -13,7 +13,7 @@ def schedule_deletion(user, deletion_type, days=7):
     
     Args:
         user: The user to schedule deletion for.
-        deletion_type: The type of deletion ('user', 'inactive_user', 'social_auth').
+        deletion_type: The type of deletion ('user', 'inactive_user', 'social_account').
         days: Number of days until deletion (default is 7).
     
     Returns:
@@ -29,6 +29,7 @@ def schedule_deletion(user, deletion_type, days=7):
         scheduled_for=now() + timedelta(days=days)
     )
     return {'success': True, 'message': 'Deletion scheduled sucessfully'}
+
 def cancel_user_scheduled_deletion(user):
     """
     Cancel a scheduled deletion for a user.
@@ -64,10 +65,10 @@ def process_scheduled_user_deletions():
             if deletion.deletion_type == 'user':
                 deletion.user.delete()
                 messages.append(f"User {deletion.user.email} deleted successfully.")
-            elif deletion.deletion_type == 'social_auth':
-                social_auth = deletion.user.social_auth.all()
-                for social_auth in social_auth:
-                    social_auth.delete()
+            elif deletion.deletion_type == 'social_account':
+                social_account = deletion.user.social_account.all()
+                for social_account in social_account:
+                    social_account.delete()
                     messages.append(f"Social auth account for {deletion.user.email} deleted successfully.")
             elif deletion.deletion_type == 'inactive_user':
                 deletion.user.delete()

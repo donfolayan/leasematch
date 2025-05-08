@@ -82,7 +82,7 @@ INSTALLED_APPS = [
     'authentication',
     'account_management',
     'token_management',
-    'social_auth',
+    'social_account',
 ]
 
 SITE_ID = 1
@@ -146,7 +146,7 @@ SOCIALACCOUNT_PROVIDERS = {
           'client_id': config('GOOGLE_OAUTH_CLIENT_ID'),
           'secret': config('GOOGLE_OAUTH_CLIENT_SECRET'),
           'key': ''
-      }
+      },
   }
 }
 

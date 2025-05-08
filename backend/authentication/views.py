@@ -54,7 +54,6 @@ def register(request):
         print(f"Serializer errors: , {serializer.errors}")
     return Response({'success': False, 'errors': serializer.errors})
 
-
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def verify_otp(request):
@@ -79,7 +78,6 @@ def verify_otp(request):
     except CustomUser.DoesNotExist:
         return Response({'success': False, 'error': 'User not found'}, status=404)
     
-
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def resend_otp(request):
@@ -105,7 +103,6 @@ def resend_otp(request):
         return Response({'success': True, 'message': 'New OTP sent successfully'})
     except CustomUser.DoesNotExist:
         return Response({'success': False, 'error': 'User not found'}, status=404)
-
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -134,7 +131,6 @@ def forgot_password(request):
     except CustomUser.DoesNotExist:
         return Response({'success': False, 'error': 'User with this email does not exist.'}, status=404)
 
-
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def change_password(request):
@@ -156,7 +152,6 @@ def change_password(request):
     OutstandingToken.objects.filter(user=user).delete()  
 
     return Response({'success': True, 'message': 'Password changed successfully'})
-
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
