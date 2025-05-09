@@ -1,11 +1,15 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+import logging
+
+logger = logging.getLogger(__name__)
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
@@ -40,7 +44,8 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
             return res
         
-        except:
+        except Exception as e:
+            logger.error(f"Error in CustomTokenObtainPairView: {str(e)}")
             return Response({'success': False})
 
 class CustomRefreshTokenView(TokenRefreshView):
@@ -78,15 +83,12 @@ class CustomRefreshTokenView(TokenRefreshView):
 @permission_classes([AllowAny])
 def logout(request):
     try:
-        res = Response()
-        res.data = {'success': True}
-
-        res.delete_cookie('access_token', path='/', samesite='None')
-        res.delete_cookie('refresh_token', path='/', samesite='None')
-
-        return res
-    except:
-        return Response({'success': False})
+        refresh_token = request.data.get('refresh')
+        token = RefreshToken(refresh_token)
+        token.blacklist()
+        return Response({"message": "Successfully logged out."}, status=200)
+    except Exception as e:
+        return Response({"message": str(e)}, status=400)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
