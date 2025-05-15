@@ -3,7 +3,6 @@ from django.db import models
 from django.conf import settings
 from datetime import timedelta
 from django.contrib.auth.models import AbstractUser
-from allauth.socialaccount.models import SocialAccount
 from backend.utils.otp import generate_otp
 from django.utils.timezone import now
 
@@ -38,7 +37,7 @@ class ScheduledDeletion(models.Model):
     )
 
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    social_account = models.OneToOneField(SocialAccount, on_delete=models.CASCADE, null=True, blank=True)
+    social_account = models.OneToOneField('socialaccount.SocialAccount', on_delete=models.CASCADE, null=True, blank=True)
     deletion_type = models.CharField(max_length=20, choices=DELETION_TYPE_CHOICES)
     scheduled_for = models.DateTimeField(default=default_scheduled_time)
     cancelled = models.BooleanField(default=False)

@@ -185,7 +185,42 @@ SOCIALACCOUNT_ADAPTER = 'social_account.social_adapters.CustomSocialAccountAdapt
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
+
+
+import dj_database_url
+DATABASE_URL = config('DATABASE_URL', default=None, cast=str)
+CONN_MAX_AGE = config('CONN_MAX_AGE', default=0, cast=int)
+
+
+
+if DATABASE_URL is not None:
+    # from urllib.parse import urlparse
+    # tmpPostgres = urlparse(DATABASE_URL)
+
+    # DATABASES = {
+    #     'default': {
+    #         'ENGINE': 'django.db.backends.postgresql',
+    #         'NAME': tmpPostgres.path.replace('/', ''),
+    #         'USER': tmpPostgres.username,
+    #         'PASSWORD': tmpPostgres.password,
+    #         'HOST': tmpPostgres.hostname,
+    #         'PORT': 5432,
+    #         'OPTIONS': {
+    #             'sslmode': 'require',
+    #         },
+    #     }
+    # }
+    
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=CONN_MAX_AGE,
+            conn_health_checks=True,
+            ssl_require=True,
+        )
+    }
+else:
+    DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',

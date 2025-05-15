@@ -10,6 +10,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('authentication', '0003_alter_customuser_id'),
+        ('socialaccount', '0001_initial'),
     ]
 
     operations = [
