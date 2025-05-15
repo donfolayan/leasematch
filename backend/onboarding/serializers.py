@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Property, AgentProfile, LandlordProfile, TenantProfile
+from .models import AgentProfile, LandlordProfile, TenantProfile
       
 class AgentProfileSerializer(serializers.ModelSerializer):
     """
