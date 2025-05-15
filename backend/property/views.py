@@ -34,7 +34,7 @@ def list_properties(request):
     serializer = PropertySerializer(properties, many=True)
     return Response({"properties": serializer.data}, status=200)
 
-@api_view(['POST'])
+@api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def update_property(request, property_id):
     """
@@ -58,7 +58,7 @@ def update_property(request, property_id):
     else:
         return Response({"success": False, "message": "Property Not Updated", "errors": serializer.errors}, status=400)
 
-@api_view(['GET'])
+@api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def delete_property(request, property_id):
     """
@@ -74,4 +74,4 @@ def delete_property(request, property_id):
     except Property.DoesNotExist:
         return Response({"message": "Property Not Found"}, status=404)
     property.delete()
-    return Response({"success": True, "message": "Property Successfully Deleted"}, status=200)
+    return Response(status=204)

@@ -96,11 +96,11 @@ def disconnect_social_account(request, provider):
             schedule_deletion(user, deletion_type='user', days=7)
 
             # Send email to user
-            # send_email(
-            #     subject="Account Deletion Scheduled",
-            #     message="Your account is scheduled for deletion in 7 days. If you wish to cancel this deletion, please contact support.",
-            #     recipient_list=[user.email],
-            # )
+            send_email(
+                subject="Account Deletion Scheduled",
+                message="Your account is scheduled for deletion in 7 days. If you wish to cancel this deletion, please contact support.",
+                recipient_list=[user.email],
+            )
 
             return Response({'success': True, 'message': 'User account scheduled for deletion'}, status=200)
     except SocialAccount.DoesNotExist:

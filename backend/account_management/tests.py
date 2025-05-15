@@ -17,7 +17,7 @@ class AccountManagementViewsTestCase(TestCase):
         # Create a test user with the required email
         self.user = CustomUser.objects.create_user(
             username="testuser",
-            email="donfolayan@gmail.com",
+            email="hello.donfolayan@gmail.com",
             password="password123",
             is_active=True
         )

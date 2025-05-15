@@ -1,24 +1,8 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from .utils import ONBOARDING_STEPS
 from .serializers import AgentProfileSerializer, LandlordProfileSerializer, TenantProfileSerializer
-
-ONBOARDING_STEPS = {
-    'landlord': {
-        1: 'Add profile details',
-        2: 'Add first property',
-        3: 'Complete onboarding',
-    },
-    'agent': {
-        1: 'Add profile details',
-        2: 'Add first property',
-        3: 'Complete onboarding',
-    },
-    'tenant': {
-        1: 'Set preferences',
-        2: 'Complete onboarding',
-    },
-}
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -74,7 +58,7 @@ def update_tenant_profile(request):
     else:
         return Response({"success": False, "message": "Tenant Profile Not Updated", "errors": serializer.errors}, status=400)
     
-@api_view(['POST'])
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_onboarding_status(request):
     user = request.user

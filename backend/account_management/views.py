@@ -16,12 +16,12 @@ def schedule_user_deletion(request):
     
     schedule_deletion(user, deletion_type='user', days=7)
 
-    # Send email to user
-    # send_email(
-    #     subject="Account Deletion Scheduled",
-    #     message="Your account is scheduled for deletion in 7 days. If you wish to cancel this deletion, please contact support.",
-    #     recipient_list=[user.email],
-    # )
+    #Send email to user
+    send_email(
+        subject="Account Deletion Scheduled",
+        message="Your account is scheduled for deletion in 7 days. If you wish to cancel this deletion, please contact support.",
+        recipient_list=[user.email],
+    )
 
     return Response({'success': True, 'message': 'Deletion scheduled successfully for 7 days from now'})
 
@@ -44,15 +44,15 @@ def cancel_scheduled_deletion(request):
 
     if deletion_canceled:
         # Send email notification to the user
-        # try:
-        #     send_email(
-        #         subject="Account Deletion Canceled",
-        #         message="Your account deletion has been cancelled successfully.",
-        #         recipient_list=[user.email],
-        #     )
-        # except Exception as e:
-        #     # Log the email failure (optional)
-        #     print(f"Failed to send email to {user.email}: {str(e)}")
+        try:
+            send_email(
+                subject="Account Deletion Canceled",
+                message="Your account deletion has been cancelled successfully.",
+                recipient_list=[user.email],
+            )
+        except Exception as e:
+            # Log the email failure (optional)
+            print(f"Failed to send email to {user.email}: {str(e)}")
 
         return Response({'success': True, 'message': 'Deletion cancelled successfully'}, status=200)
     else:

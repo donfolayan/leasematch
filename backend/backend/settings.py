@@ -36,26 +36,26 @@ LOGIN_URL = '/'
 FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:8000')
     
 # Email settings
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = config('EMAIL_HOST', default='smtp.google.com')
+EMAIL_BACKEND = config('EMAIL_BACKEND')
+EMAIL_HOST = config('EMAIL_HOST')
 EMAIL_PORT = config('EMAIL_PORT', cast=int, default='587')
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', cast=bool, default=1)
 EMAIL_USE_SSL = config('EMAIL_USE_SSL', cast=bool, default=0)
-EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='Donald' ,cast=str)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', cast=str)
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 
-DEFAULT_FROM_EMAIL = 'donfolayan@demomailtrap.co'  # Replace with a valid email address
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
 
 # 500 Error settings
-ADMIN_USERNAME = config('ADMIN_USERNAME', default='admin')
-ADMIN_EMAIL = config('ADMIN_EMAIL', default=None)
+# ADMIN_USERNAME = config('ADMIN_USERNAME', default='admin')
+# ADMIN_EMAIL = config('ADMIN_EMAIL', default=None)
 
-ADMINS = []
-MANAGERS = []
+# ADMINS = []
+# MANAGERS = []
 
-if all([ADMIN_USERNAME, ADMIN_EMAIL]):
-    ADMINS.append((ADMIN_USERNAME, ADMIN_EMAIL))
-    MANAGERS=ADMINS
+# if all([ADMIN_USERNAME, ADMIN_EMAIL]):
+#     ADMINS.append((ADMIN_USERNAME, ADMIN_EMAIL))
+#     MANAGERS=ADMINS
 
 
 # Application definition
