@@ -84,6 +84,8 @@ INSTALLED_APPS = [
     'account_management',
     'token_management',
     'social_account',
+    'onboarding',
+    'property',
 ]
 
 SITE_ID = 1

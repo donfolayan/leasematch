@@ -5,4 +5,6 @@ urlpatterns = [
     path('account_management/', include('account_management.urls')),
     path('social_account/', include('social_account.urls')),
     path('token_management/', include('token_management.urls')),
+    path('onboarding/', include('onboarding.urls')),
+    path('property/', include('property.urls')),
 ]

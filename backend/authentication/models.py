@@ -18,6 +18,8 @@ class CustomUser(AbstractUser):
 
     user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default='tenant')
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    is_onboarded = models.BooleanField(default=False)
+    onboarding_step = models.IntegerField(default=0)
 
     def generate_otp(self):
         otp, expiration = generate_otp()
@@ -51,3 +53,4 @@ class ScheduledDeletion(models.Model):
                 return f"Scheduled deletion for social auth for {self.user.email} at {self.scheduled_for}"
         elif self.deletion_type == 'inactive_user':
             return f"Scheduled deletion for inactive user {self.user.email} at {self.scheduled_for}"
+        
