@@ -3,6 +3,8 @@ djangorestframework
 django-cors-headers
 djangorestframework-simplejwt
 dj-rest-auth[with_social]
+psycopg[binary]
+dj-database-url
 python-decouple
 pyotp
 django-celery
