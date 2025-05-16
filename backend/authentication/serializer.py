@@ -41,7 +41,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return user
     
     def validate_user_type(self, value):
-        if value not in USER_TYPE_CHOICES:
+        valid_types = [choice[0] for choice in USER_TYPE_CHOICES]
+        if value not in valid_types:
             raise serializers.ValidationError("Invalid user type")
         return value
 

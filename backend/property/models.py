@@ -1,10 +1,10 @@
 from django.db import models
 from authentication.models import CustomUser
-from onboarding.utils import PROPERTY_TYPE_CHOICES, COUNTRY_CHOICES, USER_TYPE_CHOICES
+from onboarding.utils import PROPERTY_TYPE_CHOICES, COUNTRY_CHOICES, SUPER_USER_TYPE_CHOICES
 
 class Property(models.Model):  
     uploader = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='uploaded_properties')
-    uploader_user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES)
+    uploader_user_type = models.CharField(max_length=10, choices=SUPER_USER_TYPE_CHOICES)
     address = models.CharField(max_length=255)
     city = models.CharField(max_length=100)
     state = models.CharField(max_length=100)

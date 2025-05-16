@@ -2,6 +2,7 @@ import uuid
 from django.db import models
 from django.conf import settings
 from datetime import timedelta
+from onboarding.utils import USER_TYPE_CHOICES
 from django.contrib.auth.models import AbstractUser
 from backend.utils.otp import generate_otp
 from django.utils.timezone import now
@@ -9,16 +10,10 @@ from django.utils.timezone import now
 AUTH_USER_MODEL = settings.AUTH_USER_MODEL
 
 class CustomUser(AbstractUser):
-    USER_TYPE_CHOICES = (
-        ('landlord', 'Landlord'),
-        ('tenant', 'Tenant'),
-        ('agent', 'Agent'),
-    )
-
     user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default='tenant')
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     is_onboarded = models.BooleanField(default=False)
-    onboarding_step = models.IntegerField(default=0)
+    onboarding_step = models.IntegerField(default=1)
 
     def generate_otp(self):
         otp, expiration = generate_otp()

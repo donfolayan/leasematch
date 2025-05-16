@@ -82,5 +82,11 @@ COUNTRY_CHOICES = (
 
 USER_TYPE_CHOICES = (
         ('landlord', 'Landlord'),
+        ('tenant', 'Tenant'),
+        ('agent', 'Agent'),
+    )
+
+SUPER_USER_TYPE_CHOICES = (
+        ('landlord', 'Landlord'),
         ('agent', 'Agent'),
     )
