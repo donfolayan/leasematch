@@ -1,12 +1,13 @@
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from cloudinary.models import CloudinaryField
 from authentication.models import CustomUser
 
 
 class LandlordProfile(models.Model):
     user=models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='landlord_profile')
-    documents = models.FileField(upload_to='landlord_documents/', null=True, blank=True)
+    documents = CloudinaryField('landlord_documents/', null=True, blank=True)
 
 class AgentProfile(models.Model):
     NIGERIAN_STATES = (

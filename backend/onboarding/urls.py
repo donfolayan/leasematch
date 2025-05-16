@@ -14,6 +14,7 @@ urlpatterns = [
     path('landlord_profile/update/', update_landlord_profile, name='update-landlord-profile'),
     path('tenant_profile/update/', update_tenant_profile, name='update-tenant-profile'),
     path('status/', get_onboarding_status, name='get-onboarding-status'),
-    path('update', update_onboarding_step, name='update-onboarding-step'),
+    path('update/', update_onboarding_step, name='update-onboarding-step'),
+    path('skip/', skip_onboarding, name='skip-onboarding'),
     path('complete/', complete_onboarding, name='complete-onboarding'),
 ]

@@ -31,14 +31,25 @@ def update_landlord_profile(request):
     user = request.user
     if user.user_type != 'landlord':
         return Response({"message": "Invalid User Type"}, status=403)
-    data = request.data
     landlord_profile = user.landlord_profile
-    serializer = LandlordProfileSerializer(landlord_profile, data=data, partial=True)
+    serializer = LandlordProfileSerializer(landlord_profile, 
+                                           data=request.data, 
+                                           partial=True)
+    
     if serializer.is_valid():
         landlord_profile = serializer.save()
-        return Response({"success": True, "message": "Landlord Profile Successfully Updated", "profile_id": landlord_profile.id}, status=200)
+        media_url = landlord_profile.documents.url if landlord_profile.documents else None
+        return Response({"success": True, 
+                         "message": "Landlord Profile Successfully Updated", 
+                         "media":media_url ,
+                         "profile_id": landlord_profile.id}, 
+                         status=200)
+
     else:
-        return Response({"success": False, "message": "Landlord Profile Not Updated", "errors": serializer.errors}, status=400)
+        return Response({"success": False, 
+                         "message": "Landlord Profile Not Updated", 
+                         "errors": serializer.errors}, 
+                         status=400)
     
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -74,7 +85,7 @@ def get_onboarding_status(request):
         "next_action": next_action,
     })
 
-@api_view(['POST'])
+@api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def update_onboarding_step(request):
     user = request.user
@@ -100,10 +111,12 @@ def complete_onboarding(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def skip_onboarding(user):
+def skip_onboarding(request):
     """
     Function to skip onboarding for a user.
     """
-    user.is_onboarded = True
-    user.onboarding_step = max(ONBOARDING_STEPS[user.user_type].keys())
+    user = request.user
     user.save()
+    user.is_onboarded = False
+    user.onboarding_step = max(ONBOARDING_STEPS[user.user_type].keys())
+    return Response({"success": True, "message": "Onboarding skipped successfully."}, status=200)

@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'dj_rest_auth.registration',
     'allauth.socialaccount.providers.google',
+    'cloudinary',
     #local apps
     'authentication',
     'account_management',
@@ -194,23 +195,6 @@ CONN_MAX_AGE = config('CONN_MAX_AGE', default=0, cast=int)
 
 
 if DATABASE_URL is not None:
-    # from urllib.parse import urlparse
-    # tmpPostgres = urlparse(DATABASE_URL)
-
-    # DATABASES = {
-    #     'default': {
-    #         'ENGINE': 'django.db.backends.postgresql',
-    #         'NAME': tmpPostgres.path.replace('/', ''),
-    #         'USER': tmpPostgres.username,
-    #         'PASSWORD': tmpPostgres.password,
-    #         'HOST': tmpPostgres.hostname,
-    #         'PORT': 5432,
-    #         'OPTIONS': {
-    #             'sslmode': 'require',
-    #         },
-    #     }
-    # }
-    
     DATABASES = {
         'default': dj_database_url.config(
             default=DATABASE_URL,
@@ -225,6 +209,16 @@ else:
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
+}
+    
+# Cloudinary settings
+MEDIA_URL = '/media/'  # or any prefix you choose
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'devo0p1dz',
+    'API_KEY': '947228523646463',
+    'API_SECRET': '-7ojtTW1Y-Dk3e2HQnLwObAHL18',
 }
 
 # Custom User Model
