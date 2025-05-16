@@ -10,50 +10,11 @@ class LandlordProfile(models.Model):
     documents = CloudinaryField('landlord_documents/', null=True, blank=True)
 
 class AgentProfile(models.Model):
-    NIGERIAN_STATES = (
-    ('abia', 'Abia'),
-    ('adamawa', 'Adamawa'),
-    ('akwa_ibom', 'Akwa Ibom'),
-    ('anambra', 'Anambra'),
-    ('bauchi', 'Bauchi'),
-    ('bayelsa', 'Bayelsa'),
-    ('benue', 'Benue'),
-    ('borno', 'Borno'),
-    ('cross_river', 'Cross River'),
-    ('delta', 'Delta'),
-    ('ebonyi', 'Ebonyi'),
-    ('edo', 'Edo'),
-    ('ekiti', 'Ekiti'),
-    ('enugu', 'Enugu'),
-    ('gombe', 'Gombe'),
-    ('imo', 'Imo'),
-    ('jigawa', 'Jigawa'),
-    ('kaduna', 'Kaduna'),
-    ('kano', 'Kano'),
-    ('katsina', 'Katsina'),
-    ('kebbi', 'Kebbi'),
-    ('kogi', 'Kogi'),
-    ('kwara', 'Kwara'),
-    ('lagos', 'Lagos'),
-    ('nasarawa', 'Nasarawa'),
-    ('niger', 'Niger'),
-    ('ogun', 'Ogun'),
-    ('ondo', 'Ondo'),
-    ('osun', 'Osun'),
-    ('oyo', 'Oyo'),
-    ('plateau', 'Plateau'),
-    ('rivers', 'Rivers'),
-    ('sokoto', 'Sokoto'),
-    ('taraba', 'Taraba'),
-    ('yobe', 'Yobe'),
-    ('zamfara', 'Zamfara'),
-    ('fct', 'Federal Capital Territory (FCT)'),
-)
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='agent_profile')
     agency_name = models.CharField(max_length=255)
     agency_address = models.CharField(max_length=255)
     service_areas = models.JSONField(null=True, blank=True)
-    service_states = models.CharField(max_length=50, choices=NIGERIAN_STATES, null=True, blank=True)
+    service_states = models.JSONField(null=True, blank=True)
     agency_registration_number = models.CharField(max_length=100, null=True, blank=True)
 
 class TenantProfile(models.Model):
@@ -72,12 +33,18 @@ class TenantProfile(models.Model):
         ('commercial property', 'Commercial Property'),
         ('land', 'Land'),
     )
+
+    INTERVAL_CHOICES = (
+        ('month', 'Month'),
+        ('year', 'Year'),
+    )
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='tenant_profile')
     preferred_property_type = models.CharField(max_length=50, choices=PROPERTY_TYPE_CHOICES)
     budget = models.DecimalField(max_digits=10, decimal_places=2)
     preferred_location = models.CharField(max_length=255)
     move_in_date = models.DateField(null=True, blank=True)
     lease_duration = models.IntegerField(null=True, blank=True)
+    lease_interval = models.CharField(max_length=10, choices=INTERVAL_CHOICES, null=True, blank=True, default='year')
 
 @receiver(post_save, sender=CustomUser)
 def create_user_profile(sender, instance, created, **kwargs):
