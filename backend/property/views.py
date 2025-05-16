@@ -49,7 +49,7 @@ def get_property(request, property_id):
     serializer = PropertySerializer(property)
     return Response({"property": serializer.data}, status=200)
 
-@api_view(['PUT'])
+@api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 def update_property(request, property_id):
     """
