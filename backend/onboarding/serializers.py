@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import AgentProfile, LandlordProfile, TenantProfile
-from .utils import NIGERIAN_STATES
+from .utils import NIGERIAN_STATES, PROPERTY_TYPE_CHOICES
 import datetime
       
 class AgentProfileSerializer(serializers.ModelSerializer):
@@ -108,7 +108,7 @@ class TenantProfileSerializer(serializers.ModelSerializer):
             """
             Validate the preferred property type.
             """
-            valid_choices = [choice[0] for choice in TenantProfile.PROPERTY_TYPE_CHOICES]
+            valid_choices = [choice[0] for choice in PROPERTY_TYPE_CHOICES]
             if value not in valid_choices:
                 raise serializers.ValidationError(f"Invalid property type. Choose from {valid_choices}.")
             return value

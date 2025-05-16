@@ -1,6 +1,7 @@
 from django.contrib.auth.models import Group
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+from onboarding.utils import USER_TYPE_CHOICES
 
 User = get_user_model()
 
@@ -40,8 +41,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return user
     
     def validate_user_type(self, value):
-        valid_user_types = ['landlord', 'tenant', 'agent']
-        if value not in valid_user_types:
+        if value not in USER_TYPE_CHOICES:
             raise serializers.ValidationError("Invalid user type")
         return value
 

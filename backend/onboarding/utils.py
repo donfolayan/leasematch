@@ -54,3 +54,33 @@ NIGERIAN_STATES = (
     ('zamfara', 'Zamfara'),
     ('fct', 'Federal Capital Territory (FCT)'),
 )
+
+PROPERTY_TYPE_CHOICES = (
+        ('apartment', 'Apartment'),
+        ('house', 'House'),
+        ('condo', 'Condo'),
+        ('townhouse', 'Townhouse'),
+        ('duplex', 'Duplex'),
+        ('studio', 'Studio'),
+        ('villa', 'Villa'),
+        ('self_contained', 'Self Contained'),
+        ('room and parlour', 'Room and Parlour'),
+        ('shared accommodation', 'Shared Accommodation'),
+        ('office space', 'Office Space'),
+        ('commercial property', 'Commercial Property'),
+        ('land', 'Land'),
+    )
+
+INTERVAL_CHOICES = (
+    ('month', 'Month'),
+    ('year', 'Year'),
+)
+
+COUNTRY_CHOICES = (
+    ('nigeria', 'Nigeria'),
+)
+
+USER_TYPE_CHOICES = (
+        ('landlord', 'Landlord'),
+        ('agent', 'Agent'),
+    )

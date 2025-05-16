@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Property
-from onboarding.utils import NIGERIAN_STATES
+import datetime
+from onboarding.utils import NIGERIAN_STATES, COUNTRY_CHOICES, PROPERTY_TYPE_CHOICES
 
 class PropertySerializer(serializers.ModelSerializer):
     """
@@ -52,6 +53,68 @@ class PropertySerializer(serializers.ModelSerializer):
             valid_states = [choice[0] for choice in NIGERIAN_STATES]
             if data not in valid_states:
                 raise serializers.ValidationError(f"Invalid state: {data}. Choose from {valid_states}.")
+            return data
+
+        def validate_zip_code(self, data):
+            """
+            Validate that the zip code is a string.
+            """
+            if not isinstance(data, str):
+                raise serializers.ValidationError("Zip code must be a string.")
+            return data
+        
+        def validate_country(self, data):
+            """
+            Validate country.
+            """
+            if not isinstance(data, str):
+                raise serializers.ValidationError("Country must be a string.")
+            valid_countries = [choice[0] for choice in COUNTRY_CHOICES]
+            if data not in valid_countries:
+                raise serializers.ValidationError(f"Invalid country: {data}. Choose from {valid_countries}.")
+            return data
+        
+        def validate_property_type(self, data):
+            """
+            Validate property type.
+            """
+            if not isinstance(data, str):
+                raise serializers.ValidationError("Property type must be a string.")
+            valid_property_types = [choice[0] for choice in PROPERTY_TYPE_CHOICES]
+            if data not in valid_property_types:
+                raise serializers.ValidationError(f"Invalid property type: {data}. Choose from {valid_property_types}.")
+            return data
+        
+        def validate_bathroom(self, data):
+            """
+            Validate that the number of bathrooms is a positive integer.
+            """
+            if data < 0:
+                raise serializers.ValidationError("Number of bathrooms must be a positive integer.")
+            return data
+        
+        def validate_square_footage(self, data):
+            """
+            Validate that the square footage is a positive integer.
+            """
+            if data < 0:
+                raise serializers.ValidationError("Square footage must be a positive integer.")
+            return data
+        
+        def validate_available_from(self, data):
+            """
+            Validate that the available from date is in the future.
+            """
+            if data < datetime.date.today():
+                raise serializers.ValidationError("Available from date must be in the future.")
+            return data
+        
+        def validate_lease_terms(self, data):
+            """
+            Validate that the lease terms is a string.
+            """
+            if not isinstance(data, str):
+                raise serializers.ValidationError("Lease terms must be a string.")
             return data
 
         def validate_rent_price(self, data):
