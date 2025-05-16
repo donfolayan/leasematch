@@ -34,6 +34,21 @@ def list_properties(request):
     serializer = PropertySerializer(properties, many=True)
     return Response({"properties": serializer.data}, status=200)
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_property(request, property_id):
+    """
+    Endpoint to get a specific property listing.
+    """
+    user = request.user
+    try:
+        property = Property.objects.get(id=property_id, uploader=user)
+    except Property.DoesNotExist:
+        return Response({"message": "Property Not Found"}, status=404)
+    
+    serializer = PropertySerializer(property)
+    return Response({"property": serializer.data}, status=200)
+
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def update_property(request, property_id):
