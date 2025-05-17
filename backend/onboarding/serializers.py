@@ -1,7 +1,9 @@
 from rest_framework import serializers
 from .models import AgentProfile, LandlordProfile, TenantProfile
-from .utils import NIGERIAN_STATES, PROPERTY_TYPE_CHOICES
+from .utils import NIGERIAN_STATES, PROPERTY_TYPE_CHOICES, INTERVAL_CHOICES
 import datetime
+import numbers
+from decimal import Decimal
       
 class AgentProfileSerializer(serializers.ModelSerializer):
     """
@@ -22,7 +24,7 @@ class AgentProfileSerializer(serializers.ModelSerializer):
         """
         Validate the agency name.
         """
-        if type(value) != str:
+        if value is not None and not isinstance(value, str):
             raise serializers.ValidationError("Agency name must be a string.")
         return value
     
@@ -30,7 +32,7 @@ class AgentProfileSerializer(serializers.ModelSerializer):
             """
             Validate the agency address.
             """
-            if type(value) != str:
+            if value is not None and not isinstance(value, str):
                 raise serializers.ValidationError("Agency address must be a string.")
             return value
     
@@ -38,7 +40,7 @@ class AgentProfileSerializer(serializers.ModelSerializer):
         """
         Validate the service areas.
         """
-        if not isinstance(value, list):
+        if value is not None and not isinstance(value, list):
             raise serializers.ValidationError("Service areas must be a list.")
         for area in value:
             if not isinstance(area, str):
@@ -50,7 +52,7 @@ class AgentProfileSerializer(serializers.ModelSerializer):
         Validate the service states.
         """
         valid_states = [choice[0] for choice in NIGERIAN_STATES]
-        if not isinstance(value, list):
+        if value is not None and not isinstance(value, list):
             raise serializers.ValidationError("Service states must be a list.")
         for state in value:
             if state not in valid_states:
@@ -61,7 +63,7 @@ class AgentProfileSerializer(serializers.ModelSerializer):
         """
         Validate the agency registration number.
         """
-        if not isinstance(value, str):
+        if value is not None and not isinstance(value, str):
             raise serializers.ValidationError("Agency registration number must be a string.")
         if len(value) < 5:
             raise serializers.ValidationError("Agency registration number must be at least 5 characters long.")
@@ -83,9 +85,10 @@ class LandlordProfileSerializer(serializers.ModelSerializer):
             """
             Validate the documents field.
             """
-            max_size = 5 * 1024 * 1024
-            if value and hasattr(value, 'size') and value.size > max_size:
-                raise serializers.ValidationError("File size exceeds the limit of 5MB.")
+            if value is not None:
+                max_size = 5 * 1024 * 1024
+                if value and hasattr(value, 'size') and value.size > max_size:
+                    raise serializers.ValidationError("File size exceeds the limit of 5MB.")
 
 class TenantProfileSerializer(serializers.ModelSerializer):
     """
@@ -109,55 +112,63 @@ class TenantProfileSerializer(serializers.ModelSerializer):
         Validate the preferred property type.
         """
         valid_choices = [choice[0] for choice in PROPERTY_TYPE_CHOICES]
-        if value not in valid_choices:
-            raise serializers.ValidationError(f"Invalid property type. Choose from {valid_choices}.")
+        if value is not None:
+            if isinstance(value, list):
+                for item in value:
+                    if item not in valid_choices:
+                        raise serializers.ValidationError(f"Invalid property type: {item}. Choose from {valid_choices}.")
+            else:
+                if value not in valid_choices:
+                    raise serializers.ValidationError(f"Invalid property type: {value}. Choose from {valid_choices}.")
         return value
     
     def validate_budget(self, value):
         """
         Validate the budget.
         """
-        if value <= 0:
-            raise serializers.ValidationError("Budget must be a positive number.")
-        if type(value) not in [int, float]:
-            raise serializers.ValidationError("Budget must be a number.")
+        if value is not None:
+            if not isinstance(value, numbers.Number):
+                raise serializers.ValidationError("Budget must be a number.")
+            if value <= 0:
+                raise serializers.ValidationError("Budget must be a positive number.")
         return value
     
     def validate_preferred_location(self, value):
         """
         Validate the preferred location.
         """
-        if not value:
-            raise serializers.ValidationError("Preferred location cannot be empty.")
-        elif type(value) != str:
-            raise serializers.ValidationError("Preferred location must be a string.")
+        if value is not None:
+            if not isinstance(value, str):
+                raise serializers.ValidationError("Preferred location must be a string.")
         return value
     
     def validate_move_in_date(self, value):
         """
         Validate move-in date.
         """
-        if value < datetime.date.today():
-            raise serializers.ValidationError("Move-in date cannot be in the past.")
-        if type(value) != datetime.date:
-            raise serializers.ValidationError("Move-in date must be a date.")
-        return value
+        if value is not None:
+            if not isinstance(value, datetime.date):
+                raise serializers.ValidationError("Move-in date must be a date.")
+            if value < datetime.date.today():
+                raise serializers.ValidationError("Move-in date cannot be in the past.")  
+            return value
     
     def validate_lease_duration(self, value):
         """
         Validate lease duration.
         """
-        if value <= 0:
-            raise serializers.ValidationError("Lease duration must be a positive number.")
-        if type(value) != int:
-            raise serializers.ValidationError("Lease duration must be a number.")
+        if value is not None:
+            if not isinstance(value, int):
+                raise serializers.ValidationError("Lease duration must be a number.")
+            if value <= 0:
+                raise serializers.ValidationError("Lease duration must be a positive number.")
         return value
     
     def validate_lease_interval(self, value):
             """
             Validate lease interval.
             """
-            valid_choices = [choice[0] for choice in TenantProfile.INTERVAL_CHOICES]
-            if value not in valid_choices:
+            valid_choices = [choice[0] for choice in INTERVAL_CHOICES]
+            if value is not None and value not in valid_choices:
                 raise serializers.ValidationError(f"Invalid lease interval. Choose from {valid_choices}.")
             return value

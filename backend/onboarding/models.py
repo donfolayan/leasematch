@@ -4,12 +4,13 @@ from django.dispatch import receiver
 from cloudinary.models import CloudinaryField
 from authentication.models import CustomUser
 from .utils import INTERVAL_CHOICES, COUNTRY_CHOICES
+from django.db import transaction
 
 
 
 class LandlordProfile(models.Model):
     user=models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='landlord_profile')
-    documents = CloudinaryField('landlord_documents/', null=True, blank=True)
+    documents = CloudinaryField('documents', folder='landlord_documents/', null=True, blank=True)
 
 class AgentProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='agent_profile')
@@ -29,6 +30,7 @@ class TenantProfile(models.Model):
     lease_interval = models.CharField(max_length=10, choices=INTERVAL_CHOICES, null=True, blank=True, default='year')
 
 @receiver(post_save, sender=CustomUser)
+@transaction.atomic
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
         if instance.user_type == 'landlord':

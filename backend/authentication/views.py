@@ -4,7 +4,7 @@ from django.core.cache import cache
 from django.db import transaction
 from django.contrib.auth.hashers import check_password
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
 from backend.utils.email import send_email
@@ -12,6 +12,11 @@ from backend.utils.otp import generate_otp
 from django.contrib.auth.tokens import default_token_generator
 from .models import CustomUser
 from .serializer import UserRegistrationSerializer
+import logging
+from django.core.exceptions import ValidationError
+from django.contrib.auth.password_validation import validate_password
+
+logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
@@ -38,7 +43,7 @@ def register(request):
                     recipient_list=[user.email],
                 )
             except Exception as e:
-                print(f"Email sending failed: {e}")
+                logger.error(f"Email sending failed: {e}")
                 return Response({"success": False, "error":f"Failed to send email:{str(e)}"}, status=500)
 
             return Response({
@@ -47,11 +52,11 @@ def register(request):
                 'user_id': user.id
             })
         except Exception as e:
-            print(f"Error during registration: {e}")
+            logger.error(f"Error during registration: {e}")
             transaction.set_rollback(True)
             return Response({'success': False, 'error': str(e)}, status=500)
     else:
-        print(f"Serializer errors: , {serializer.errors}")
+        logger.error(f"Serializer errors: , {serializer.errors}")
     return Response({'success': False, 'errors': serializer.errors})
 
 @api_view(['POST'])
@@ -93,12 +98,16 @@ def resend_otp(request):
         otp, expiration = generate_otp()
         cache.set(f'otp_{user.id}', otp, timeout=expiration)
 
+        try:
         # Send email
-        send_email(
-            subject='Your OTP Code',
-            message=f'Your new OTP code is {otp}. It will expire in 5 minutes.',
-            recipient_list=[user.email],
-        )
+            send_email(
+                subject='Your OTP Code',
+                message=f'Your new OTP code is {otp}. It will expire in 5 minutes.',
+                recipient_list=[user.email],
+            )
+        except Exception as e:
+            logger.error(f"Email sending failed: {e}")
+            return Response({"success": False, "error":f"Failed to send email:{str(e)}"}, status=500)
 
         return Response({'success': True, 'message': 'New OTP sent successfully'})
     except CustomUser.DoesNotExist:
@@ -120,11 +129,15 @@ def forgot_password(request):
         cache.set(f'otp_{user.id}', otp, timeout=expiration)  # Store OTP in cache for 5 minutes
 
         # Send email with the reset link
-        send_email(
-            subject='Your Password Reset OTP',
-            message=f'Your OTP for password reset is {otp}. It will expire in 5 minutes.',
-            recipient_list=[email],
-        )
+        try:
+            send_email(
+                subject='Your Password Reset OTP',
+                message=f'Your OTP for password reset is {otp}. It will expire in 5 minutes.',
+                recipient_list=[email],
+            )
+        except Exception as e:
+            logger.error(f"Email sending failed: {e}")
+            return Response({"success": False, "error":f"Failed to send email:{str(e)}"}, status=500)
 
         return Response({'success': True, 'message': 'Password reset email sent successfully.'})
 
@@ -132,7 +145,7 @@ def forgot_password(request):
         return Response({'success': False, 'error': 'User with this email does not exist.'}, status=404)
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def change_password(request):
     user = request.user
     current_password = request.data.get('current_password')
@@ -145,11 +158,21 @@ def change_password(request):
     if not check_password(current_password, user.password):
         return Response({'success': False, 'error': 'Current password is incorrect'}, status=400)
     
+    # Validate new password
+    try:
+        validate_password(new_password, user=user)
+    except ValidationError as e:
+        return Response({'success': False, 'error': str(e)}, status=400)
+    
+    # Set new password
     user.set_password(new_password)
     user.save()
 
     # Invalidate all tokens for the user
-    OutstandingToken.objects.filter(user=user).delete()  
+    try:
+        OutstandingToken.objects.filter(user=user).delete()  
+    except Exception as e:
+        logger.warning(f"Could not invalidate tokens for user {user.id}: {e}")
 
     return Response({'success': True, 'message': 'Password changed successfully'})
 
@@ -203,9 +226,15 @@ def reset_password(request):
 
     if not email or not new_password:
         return Response({'success': False, 'error': 'Missing email or new password'}, status=400)
-
+    
     try:
         user = CustomUser.objects.get(email=email)
+        # Validate new password
+        try:
+            validate_password(new_password, user=user)
+        except ValidationError as e:
+            return Response({'success': False, 'error': str(e)}, status=400)
+        # Set new password
         user.set_password(new_password)
         user.save()
 
