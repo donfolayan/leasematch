@@ -53,10 +53,10 @@ class CustomRefreshTokenView(TokenRefreshView):
 
         try:
             refresh_token = request.COOKIES.get('refresh_token')
-            
-            request.data['refresh'] = refresh_token
+            data = request.data.copy()
+            data['refresh'] = refresh_token
 
-            response = super().post(request, *args, **kwargs)
+            response = super().post(request._request, data, *args, **kwargs)
 
             tokens = response.data
             access_token = tokens.get('access')
@@ -83,12 +83,23 @@ class CustomRefreshTokenView(TokenRefreshView):
 @permission_classes([AllowAny])
 def logout(request):
     try:
-        refresh_token = request.data.get('refresh')
+        refresh_token = request.data.get('refresh') or request.COOKIES.get('refresh_token')
+        if not refresh_token:
+            return Response({"message": "Refresh token not provided."}, status=400)
         token = RefreshToken(refresh_token)
         token.blacklist()
-        return Response({"message": "Successfully logged out."}, status=200)
+
+        res = Response({"success": True, 
+                        "message": "Successfully logged out."}, 
+                        status=200)
+        #clear cookies
+        res.delete_cookie('access_token', path='/')
+        res.delete_cookie('refresh_token', path='/')
+        return res
     except Exception as e:
-        return Response({"message": str(e)}, status=400)
+        return Response({"success": False, 
+                         "message": str(e)}, 
+                         status=400)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
