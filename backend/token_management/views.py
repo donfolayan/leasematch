@@ -53,10 +53,12 @@ class CustomRefreshTokenView(TokenRefreshView):
 
         try:
             refresh_token = request.COOKIES.get('refresh_token')
-            data = request.data.copy()
-            data['refresh'] = refresh_token
+            logger.debug(f"Refresh token from cookie: {refresh_token}")
+            request_data = request.data.copy()
+            request_data['refresh'] = refresh_token
+            request._full_data = request_data  # Patch the DRF request object
 
-            response = super().post(request._request, data, *args, **kwargs)
+            response = super().post(request, *args, **kwargs)
 
             tokens = response.data
             access_token = tokens.get('access')
@@ -76,7 +78,8 @@ class CustomRefreshTokenView(TokenRefreshView):
 
             return res
         
-        except:
+        except Exception as e:
+            logger.error(f"Error in CustomRefreshTokenView: {str(e)}")
             return Response({'refreshed': False})
         
 @api_view(['POST'])

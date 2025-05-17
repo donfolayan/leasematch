@@ -7,7 +7,8 @@ from .views import (
     reset_password,
     verify_password_reset_otp,
     change_password,
-    reactivate_account,
+    send_activation_token,
+    activate_account,
     )
 
 urlpatterns = [
@@ -18,5 +19,6 @@ urlpatterns = [
     path('reset_password/', reset_password, name='reset_password'),
     path('verify_password_reset/', verify_password_reset_otp, name='verify_password_reset_otp'),
     path('change_password/', change_password, name='change_password'),
-    path('reactivate_account/', reactivate_account, name='reactivate_account'),
+    path('send_activation_token/', send_activation_token, name='send_reactivation_token'),
+    path('activate_account/', activate_account, name='reactivate_account'),
 ]

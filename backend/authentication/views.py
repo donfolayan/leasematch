@@ -15,6 +15,7 @@ from .serializer import UserRegistrationSerializer
 import logging
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
+from django.shortcuts import redirect
 
 logger = logging.getLogger(__name__)
 
@@ -198,23 +199,75 @@ def verify_password_reset_otp(request):
     except CustomUser.DoesNotExist:
         return Response({'success': False, 'error': 'User with this email does not exist.'}, status=404)
     
+#TODO:
+# 1. Remove email from send_activation token
+# 2. Use shortlived HTTP-only cookie
+# 3. Redirect to activation endpoint
+# 4. Read token from cookie
+# 5. Activate account
+# 6. Delete cookie
 @api_view(['POST'])
 @permission_classes([AllowAny])
-def reactivate_account(request):
-    user_id = request.data.get('user_id')
-    token = request.data.get('token')
+def send_activation_token(request):
+    email = request.data.get('email')
+    if not email:
+        return Response({'success': False, 'error': 'Missing email'}, status=400)
+    try:
+        user = CustomUser.objects.get(email=email)
+        if user.is_active:
+            return Response({'success': False, 'error': 'Account already active'}, status=400)
+        token = default_token_generator.make_token(user)
+        response = redirect(settings.FRONTEND_URL + '/api/authentication/activate_account/')
+        # Set token and user_id in cookie
+        response.set_cookie(
+            key='activation_token',
+            value=token,
+            httponly=True,
+            secure=True,
+            samesite='Lax',
+            max_age=300
+        )
+        response.set_cookie(
+            key='activation_user_id',
+            value=str(user.id),
+            httponly=True,
+            secure=True,
+            samesite='Lax',
+            max_age=300
+        )
+        return response
+    except CustomUser.DoesNotExist:
+        return Response({'success': False, 'error': 'User not found'}, status=404)
 
-    if not user_id or not token:
+@api_view(['POST', 'GET'])
+@permission_classes([AllowAny])
+def activate_account(request):
+    activation_user_id = request.COOKIES.get('activation_user_id')
+    activation_token = request.COOKIES.get('activation_token')
+
+    if not activation_user_id or not activation_token:
         return Response({'success': False, 'error': 'Missing user_id or token'}, status=400)
 
     try:
-        user = CustomUser.objects.get(id=user_id)
-        if default_token_generator.check_token(user, token):
+        user = CustomUser.objects.get(id=activation_user_id)
+        if default_token_generator.check_token(user, activation_token):
             user.is_active = True
             user.save()
-            return Response({'success': True, 'message': 'Account reactivated successfully'})
+            response = Response({'success': True, 'message': 'Account activated successfully'})
+            try:
+                send_email(
+                    subject='Account Activation Successful',
+                    message='Your account has been activated successfully.',
+                    recipient_list=[user.email],
+                )
+            except Exception as e:
+                logger.error(f"Email sending failed: {e}")
+            # Clear cookies
+            response.delete_cookie('activation_token')
+            response.delete_cookie('activation_user_id')
+            return response
         else:
-            return Response({'success': False, 'error': 'Invalid token'}, status=400)
+            return Response({'success': False, 'error': 'Invalid or expired token'}, status=400)
     except CustomUser.DoesNotExist:
         return Response({'success': False, 'error': 'User not found'}, status=404)
 
