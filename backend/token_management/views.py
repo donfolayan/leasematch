@@ -62,6 +62,7 @@ class CustomRefreshTokenView(TokenRefreshView):
 
             tokens = response.data
             access_token = tokens.get('access')
+            new_refresh_token = tokens.get('refresh')
             
 
             res = Response()
@@ -76,6 +77,17 @@ class CustomRefreshTokenView(TokenRefreshView):
                 path='/',
             )
 
+            if new_refresh_token:
+                new_refresh_token = tokens.get('refresh')
+                res.set_cookie(
+                    key='refresh_token',
+                    value=new_refresh_token,
+                    httponly=True,
+                    secure=True,
+                    samesite='None',
+                    path='/',
+                )
+
             return res
         
         except Exception as e:
@@ -88,10 +100,12 @@ def logout(request):
     try:
         refresh_token = request.data.get('refresh') or request.COOKIES.get('refresh_token')
         if not refresh_token:
-            return Response({"message": "Refresh token not provided."}, status=400)
+            return Response({"success": False, 
+                             "message": "Refresh token not provided."}, 
+                             status=400)
+        
         token = RefreshToken(refresh_token)
         token.blacklist()
-
         res = Response({"success": True, 
                         "message": "Successfully logged out."}, 
                         status=200)
@@ -101,9 +115,9 @@ def logout(request):
         return res
     except Exception as e:
         return Response({"success": False, 
-                         "message": str(e)}, 
+                         "message": str(e)},
                          status=400)
-
+    
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def is_authenticated(request):
