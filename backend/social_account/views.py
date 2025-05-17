@@ -60,19 +60,6 @@ def disconnect_social_account(request, provider):
     Returns:
         Response: A JSON response indicating the success or failure of the operation.
     """
-
-    # logger.info(f"Disconnecting {provider} account for user {request.user.id}")
-    # if not request.user.is_authenticated:
-    #     logger.error("User is not authenticated")
-    #     return Response({'success': False, 'error': 'User not authenticated'}, status=401)
-    
-    # try:
-    #     social_account = SocialAccount.objects.get(user=request.user, provider=provider)
-    #     logger.info(f"Found social account for provider {provider}")
-    # except SocialAccount.DoesNotExist:
-    #     logger.error(f"Social account for provider {provider} does not exist")
-    #     return Response({'success': False, 'error': 'Social account not found'}, status=404)
-
     user = request.user
     
     logger.info(f"Disconnecting {provider} account for user {request.user.id}")
@@ -96,13 +83,18 @@ def disconnect_social_account(request, provider):
             schedule_deletion(user, deletion_type='user', days=7)
 
             # Send email to user
-            send_email(
-                subject="Account Deletion Scheduled",
-                message="Your account is scheduled for deletion in 7 days. If you wish to cancel this deletion, please contact support.",
-                recipient_list=[user.email],
-            )
+            try:
+                send_email(
+                    subject="Account Deletion Scheduled",
+                    message="Your account is scheduled for deletion in 7 days. If you wish to cancel this deletion, please contact support.",
+                    recipient_list=[user.email],
+                )
 
-            return Response({'success': True, 'message': 'User account scheduled for deletion'}, status=200)
+                return Response({'success': True, 'message': 'User account scheduled for deletion'}, status=200)
+            except Exception as e:
+                logger.error(f"Email sending failed: {e}")
+                return Response({'success': False, 'error': f"Failed to send email: {str(e)}"}, status=500)
+            
     except SocialAccount.DoesNotExist:
         return Response({
             'success': False, 
