@@ -199,13 +199,6 @@ def verify_password_reset_otp(request):
     except CustomUser.DoesNotExist:
         return Response({'success': False, 'error': 'User with this email does not exist.'}, status=404)
     
-#TODO:
-# 1. Remove email from send_activation token
-# 2. Use shortlived HTTP-only cookie
-# 3. Redirect to activation endpoint
-# 4. Read token from cookie
-# 5. Activate account
-# 6. Delete cookie
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def send_activation_token(request):
