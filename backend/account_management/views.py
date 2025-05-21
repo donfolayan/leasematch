@@ -2,7 +2,7 @@ from backend.utils.email import send_email
 from backend.utils.deletions import schedule_deletion, cancel_user_scheduled_deletion, process_scheduled_user_deletions
 from authentication.models import ScheduledDeletion
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 import logging
 
@@ -58,20 +58,25 @@ def cancel_scheduled_deletion(request):
     else:
         return Response({'success': False, 'error': 'No scheduled deletion found'}, status=400)
     
-def cancel_user_scheduled_deletion(user):
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def process_scheduled_deletions(request):
     """
-    Utility function to cancel a scheduled deletion for a user.
-    
+    API view to process scheduled deletions.
+
     Args:
-        user: The user to cancel deletion for.
-    
+        request: The HTTP request object.
+
     Returns:
-        True if a deletion was canceled, False otherwise.
+        Response: A JSON response indicating the success or failure of the operation.
     """
     try:
-        scheduled_deletion = ScheduledDeletion.objects.get(user=user, cancelled=False)
-        scheduled_deletion.cancelled = True
-        scheduled_deletion.save()
-        return True
-    except ScheduledDeletion.DoesNotExist:
-        return False
+        process_scheduled_user_deletions()
+        logger.info("Admin %s processed scheduled deletions", request.user.email)
+        return Response({'success': True,
+                         'message': 'Scheduled deletions processed.'}, status=200)
+    except Exception as e:
+        logger.error("Error processing scheduled deletions: %s", str(e))
+        return Response({'success': False,
+                         'error': str(e)}, 
+                         status=500)
