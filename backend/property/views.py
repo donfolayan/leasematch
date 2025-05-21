@@ -3,7 +3,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from .serializers import PropertySerializer
 from .models import Property
-from .utils import apply_property_filters
+from .filter_property import apply_property_filters
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -43,54 +43,6 @@ def list_properties(request):
     serializer = PropertySerializer(qs, many=True)
     return Response({"properties": serializer.data}, status=200)
 
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def list_properties_by_user(request):
-    """
-    Endpoint to list properties by other users(landlord and agents only) or self.
-
-    Args:
-        request (HttpRequest): The request object containing query parameters.
-    Returns:
-        Response: A response containing the filtered properties.
-    """
-    user = request.user
-    user_id = request.query_params.get('user_id')
-    # Check if the user is a landlord or agent
-    if user_id and user.user_type in ['landlord', 'agent']:
-        try:
-            from authentication.models import CustomUser
-            target_user = CustomUser.objects.get(id=user.id)
-            qs = Property.objects.filter(uploader=target_user)
-            qs = apply_property_filters(qs, request)
-        except CustomUser.DoesNotExist:
-            return Response({"message": "User Not Found"}, status=404)
-    else:
-        qs = Property.objects.filter(uploader=user)
-        qs = apply_property_filters(qs, request)
-
-    serializer = PropertySerializer(qs, many=True)
-    return Response({"properties": serializer.data,
-                     "count": qs.count(),
-                     "viewing_user_id": user_id if user_id else user.id}, 
-                     status=200)
-
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_property(request, property_id):
-    """
-    Endpoint to get a specific property listing.
-    """
-    user = request.user
-    try:
-        property = Property.objects.get(id=property_id, uploader=user)
-    except Property.DoesNotExist:
-        return Response({"message": "Property Not Found"}, status=404)
-    
-    serializer = PropertySerializer(property)
-    return Response({"property": serializer.data}, status=200)
-
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 def update_property(request, property_id):
@@ -107,13 +59,33 @@ def update_property(request, property_id):
     except Property.DoesNotExist:
         return Response({"message": "Property Not Found"}, status=404)
     
-    data = request.data
-    serializer = PropertySerializer(property, data=data, partial=True)
+    serializer = PropertySerializer(property, data=request.data, partial=True)
     if serializer.is_valid():
         property = serializer.save()
-        return Response({"success": True, "message": "Property Successfully Updated", "property_id": property.id}, status=200)
+        return Response({"success": True, 
+                         "message": "Property Successfully Updated", 
+                         "property_id": property.id}, 
+                         status=200)
     else:
-        return Response({"success": False, "message": "Property Not Updated", "errors": serializer.errors}, status=400)
+        return Response({"success": False, 
+                         "message": "Property Not Updated", 
+                         "errors": serializer.errors}, 
+                         status=400)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_property(request, property_id):
+    """
+    Endpoint to get a specific property listing.
+    """
+    user = request.user
+    try:
+        property = Property.objects.get(id=property_id, uploader=user)
+    except Property.DoesNotExist:
+        return Response({"message": "Property Not Found"}, status=404)
+    
+    serializer = PropertySerializer(property)
+    return Response({"property": serializer.data}, status=200)
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])

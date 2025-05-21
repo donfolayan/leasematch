@@ -20,6 +20,7 @@ class Property(models.Model):
     rent_price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(1)])
     available_from = models.DateField()
     lease_terms = models.TextField()
+    featured = models.BooleanField(default=False, help_text="Designates if this property is featured on the site.")
     date_added = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
     

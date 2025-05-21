@@ -31,6 +31,11 @@ def apply_property_filters(qs, request):
         qs = qs.filter(rent_price__gte=min_price)
     if max_price:
         qs = qs.filter(rent_price__lte=max_price)
+
+    # Filter by User
+    user_id = request.query_params.get('user_id')
+    if user_id:
+        qs = qs.filter(uploader__id=user_id)
     
     # Filter by property type
     property_type = request.query_params.get('property_type')
