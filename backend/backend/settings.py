@@ -212,7 +212,7 @@ else:
 }
     
 # Cloudinary settings
-MEDIA_URL = '/media/'  # or any prefix you choose
+MEDIA_URL = '/media/'
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 CLOUDINARY_STORAGE = {
