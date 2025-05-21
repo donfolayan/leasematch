@@ -40,8 +40,11 @@ def list_properties(request):
     """
     qs = Property.objects.all()
     qs = apply_property_filters(qs, request)
-    serializer = PropertySerializer(qs, many=True)
-    return Response({"properties": serializer.data}, status=200)
+    if qs.count() == 0:
+        return Response({"message": "No search matches your parameter, please try again with new filters"}, status=404)
+    else:
+        serializer = PropertySerializer(qs, many=True)
+        return Response({"properties": serializer.data}, status=200)
 
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
