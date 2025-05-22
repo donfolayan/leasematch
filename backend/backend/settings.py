@@ -28,7 +28,10 @@ SECRET_KEY = config('DJANGO_SECRET_KEY', default=None, cast=str)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DJANGO_DEBUG', default=0, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['.railway.app']
+if DEBUG:
+    ALLOWED_HOSTS += ['localhost', 
+                      '127.0.0.1']
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
@@ -100,7 +103,44 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
+    'backend.middleware.RequestTimeLoggerMiddleware',
 ]
+
+import os
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',  
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        '': { 
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'backend.middleware': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False, 
+        },
+    },
+}
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -182,6 +222,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'backend.wsgi.application'
 
 SOCIALACCOUNT_ADAPTER = 'social_account.social_adapters.CustomSocialAccountAdapter'
+ACCOUNT_ADAPTER = 'allauth.account.adapter.DefaultAccountAdapter'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -190,7 +231,7 @@ SOCIALACCOUNT_ADAPTER = 'social_account.social_adapters.CustomSocialAccountAdapt
 
 import dj_database_url
 DATABASE_URL = config('DATABASE_URL', default=None, cast=str)
-# DATABASE_URL = None
+DATABASE_URL = None
 CONN_MAX_AGE = config('CONN_MAX_AGE', default=0, cast=int)
 
 

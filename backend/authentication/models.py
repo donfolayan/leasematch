@@ -13,23 +13,19 @@ logger = logging.getLogger(__name__)
 AUTH_USER_MODEL = settings.AUTH_USER_MODEL
 
 class UserType(models.Model):
-    name=models.CharField(max_length=20, choices=USER_TYPE_CHOICES, default='tenant', unique=True)
-    description=models.TextField(blank=True, null=True)
+    name = models.CharField(max_length=20, choices=USER_TYPE_CHOICES, default='tenant', unique=True, db_index=True)
+    description = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.name
 
 class CustomUser(AbstractUser):
-    user_type = models.ManyToManyField(UserType, related_name='user_type')
+    user_type = models.ManyToManyField(UserType, related_name='users')
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    username = models.CharField(max_length=150, unique=True, db_index=True)
+    email = models.EmailField(max_length=254, unique=True, db_index=True)
     is_onboarded = models.BooleanField(default=False)
     onboarding_step = models.IntegerField(default=1)
-
-    def generate_otp(self):
-        otp, expiration = generate_otp()
-        self.otp, self.otp_expiration = otp, expiration
-        self.save()
-        return otp
     
     def add_user_type(self, user_type):
         try:
@@ -43,10 +39,6 @@ class CustomUser(AbstractUser):
         except Exception as e:
             logger.error(f"Error adding user type: {e}")
             return False
-
-    
-    def __str__(self):
-        return super().__str__()
 
 def default_scheduled_time():
     return now() + timedelta(days=7)
