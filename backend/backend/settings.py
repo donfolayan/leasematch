@@ -231,7 +231,7 @@ ACCOUNT_ADAPTER = 'allauth.account.adapter.DefaultAccountAdapter'
 
 import dj_database_url
 DATABASE_URL = config('DATABASE_URL', default=None, cast=str)
-DATABASE_URL = None
+# DATABASE_URL = None
 CONN_MAX_AGE = config('CONN_MAX_AGE', default=0, cast=int)
 
 
