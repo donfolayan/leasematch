@@ -58,7 +58,7 @@ def register(request):
             return Response({'success': False, 'error': str(e)}, status=500)
     else:
         logger.error(f"Serializer errors: , {serializer.errors}")
-    return Response({'success': False, 'errors': serializer.errors})
+    return Response({'success': False, 'errors': serializer.errors}, status=400)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -228,6 +228,7 @@ def send_activation_token(request):
             samesite='Lax',
             max_age=300
         )
+        response.status_code = 302
         return response
     except CustomUser.DoesNotExist:
         return Response({'success': False, 'error': 'User not found'}, status=404)

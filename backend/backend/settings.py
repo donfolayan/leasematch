@@ -190,6 +190,7 @@ SOCIALACCOUNT_ADAPTER = 'social_account.social_adapters.CustomSocialAccountAdapt
 
 import dj_database_url
 DATABASE_URL = config('DATABASE_URL', default=None, cast=str)
+# DATABASE_URL = None
 CONN_MAX_AGE = config('CONN_MAX_AGE', default=0, cast=int)
 
 
