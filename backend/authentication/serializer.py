@@ -51,14 +51,14 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         username = data.get('username')
         email = data.get('email')
 
-        # existing_users = User.objects.filter(Q(username=username) | 
-        #                                     Q(email=email)
-        #                                     ).values_list('username', 'email')
-        # for existing_username, existing_email in existing_users:
-        #     if existing_username == username:
-        #         errors['username'] = "Username already exists"
-        #     if existing_email == email:
-        #         errors['email'] = "Email already exists"
+        existing_users = User.objects.filter(Q(username=username) | 
+                                            Q(email=email)
+                                            ).values_list('username', 'email')
+        for existing_username, existing_email in existing_users:
+            if existing_username == username:
+                errors['username'] = "Username already exists"
+            if existing_email == email:
+                errors['email'] = "Email already exists"
 
         if email and "+" in email:
             raise serializers.ValidationError("Email cannot contain '+' character.")
