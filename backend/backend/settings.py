@@ -28,10 +28,14 @@ SECRET_KEY = config('DJANGO_SECRET_KEY', default=None, cast=str)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DJANGO_DEBUG', default=0, cast=bool)
 
-ALLOWED_HOSTS = ['.railway.app']
-if DEBUG:
+ALLOWED_HOSTS = []
+if DEBUG==True:
     ALLOWED_HOSTS += ['localhost', 
                       '127.0.0.1']
+    FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:8000')
+else:
+    ALLOWED_HOSTS += ['.up.railway.app']
+    FRONTEND_URL = 'https://leasematch-production.up.railway.app/'
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
@@ -59,7 +63,6 @@ DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
 # if all([ADMIN_USERNAME, ADMIN_EMAIL]):
 #     ADMINS.append((ADMIN_USERNAME, ADMIN_EMAIL))
 #     MANAGERS=ADMINS
-
 
 # Application definition
 
@@ -231,7 +234,7 @@ ACCOUNT_ADAPTER = 'allauth.account.adapter.DefaultAccountAdapter'
 
 import dj_database_url
 DATABASE_URL = config('DATABASE_URL', default=None, cast=str)
-# DATABASE_URL = None
+DATABASE_URL = None
 CONN_MAX_AGE = config('CONN_MAX_AGE', default=0, cast=int)
 
 
