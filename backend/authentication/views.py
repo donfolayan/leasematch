@@ -112,7 +112,7 @@ def resend_otp(request):
 
         return Response({'success': True, 'message': 'New OTP sent successfully'})
     except CustomUser.DoesNotExist:
-        return Response({'success': False, 'error': 'User not found'}, status=404)
+        return Response({'success': False, 'error': 'User not found'}, status=400)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -143,7 +143,7 @@ def forgot_password(request):
         return Response({'success': True, 'message': 'Password reset email sent successfully.'})
 
     except CustomUser.DoesNotExist:
-        return Response({'success': False, 'error': 'User with this email does not exist.'}, status=404)
+        return Response({'success': False, 'error': 'User with this email does not exist.'}, status=400)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])

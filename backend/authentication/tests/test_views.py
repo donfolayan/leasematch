@@ -50,7 +50,7 @@ class TestViews(TestSetup):
         # pdb.set_trace()
         self.assertEqual(res.status_code, 200)
 
-    def test_user_cannot_verify_otp_with_invalid_data(self):
+    def test_user_cannot_verify_otp_with_invalid_user_id(self):
         res=self.client.post(self.verify_otp_url, {
             "user_id": "8bedfb98-4d7b-44a0-92c2-62dd8bfc993b",
             "otp": "123456"
@@ -84,5 +84,52 @@ class TestViews(TestSetup):
         # pdb.set_trace()
         self.assertEqual(res.status_code, 400)
 
+    def test_user_can_resend_otp(self):
+        user=self.client.post(self.register_url, {
+            "email": "test2@test.test",
+            "username": "user2",
+            "password": "password",
+            "first_name": "Test",
+            "last_name": "User",
+            "user_type": "tenant",
+        }, format='json')
+
+        user_id = str(user.data['user_id'])
+
+        res=self.client.post(self.resend_otp_url, {
+            "user_id": user_id
+        }, format='json')
+
+        self.assertEqual(res.status_code, 200)
     
+    def test_user_cannot_resend_otp_with_invalid_user_id(self):
+        res=self.client.post(self.resend_otp_url, {
+            "user_id": "8bedfb98-4d7b-44a0-92c2-62dd8bfc993b"
+        }, format='json')
+        self.assertEqual(res.status_code, 400)
+
+    def test_user_can_use_forgot_password(self):
+        user=self.client.post(self.register_url, {
+            "email": "test4@test.test",
+            "username": "user2",
+            "password": "password",
+            "first_name": "Test",
+            "last_name": "User",
+            "user_type": "tenant",
+        }, format='json')
+
+        res=self.client.post(self.forgot_password_url, {
+            "email": "test4@test.test"
+        }, format='json')
+
+        self.assertEqual(res.status_code, 200)
+    
+    def test_user_cannot_use_forgot_password_with_invalid_email(self):
+        
+        res=self.client.post(self.forgot_password_url, {
+            "email": "test10@test.test"
+        }, format='json')
+
+        self.assertEqual(res.status_code, 400)
+
     
