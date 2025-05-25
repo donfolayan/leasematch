@@ -51,7 +51,7 @@ def register(request):
                 'success': True,
                 'message': 'User registered successfully. Please check your email for the OTP.',
                 'user_id': user.id
-            })
+            }, status=201)
         except Exception as e:
             logger.error(f"Error during registration: {e}")
             transaction.set_rollback(True)

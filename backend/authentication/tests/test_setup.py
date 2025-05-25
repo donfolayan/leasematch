@@ -1,7 +1,14 @@
 from rest_framework.test import APITestCase
+from django.contrib.auth.models import Group
 from django.urls import reverse
 
 class TestSetup(APITestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        Group.objects.create(name='tenant')
+        Group.objects.create(name='landlord')
+        Group.objects.create(name='agent')
     
     def setUp(self):
         """
@@ -18,10 +25,13 @@ class TestSetup(APITestCase):
         self.send_activation_token_url = reverse('send_activation_token')
         self.activate_account_url = reverse('activate_account')
 
-        user_data = {
+        self.user_data = {
             "email": "test@test.test",
             "username": "user",
             "password": "password",
+            "first_name": "Test",
+            "last_name": "User",
+            "user_type": "tenant",
         }
 
 
