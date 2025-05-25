@@ -82,7 +82,7 @@ def verify_otp(request):
             return Response({'success': False, 'error': 'Invalid or expired OTP'}, status=400)
 
     except CustomUser.DoesNotExist:
-        return Response({'success': False, 'error': 'User not found'}, status=404)
+        return Response({'success': False, 'error': 'User not found'}, status=400)
     
 @api_view(['POST'])
 @permission_classes([AllowAny])

@@ -1,6 +1,13 @@
-from rest_framework.test import APITestCase
+from rest_framework.test import APITestCase, APIClient
 from django.contrib.auth.models import Group
 from django.urls import reverse
+from django.test import override_settings
+
+@override_settings(REST_FRAMEWORK={
+    'DEFAULT_THROTTLE_CLASSES': [],
+    'DEFAULT_THROTTLE_RATES': {}
+})
+
 
 class TestSetup(APITestCase):
 
@@ -33,6 +40,12 @@ class TestSetup(APITestCase):
             "last_name": "User",
             "user_type": "tenant",
         }
+
+        self.client = APIClient()
+        self.client.default_format = 'json'
+        self.client.defaults.update({
+            'HTTP_X_TEST_CLIENT': 'true'
+        })
 
 
     def tearDown(self):
