@@ -13,13 +13,16 @@ def add_property(request):
     Only landlords and agents can add properties.
     """
     user = request.user
-    if user.user_type not in ['landlord', 'agent']:
+    if not (user.has_user_type('landlord') or user.has_user_type('agent')):
         return Response({"message": "Invalid User Type"}, status=403)
     
     data = request.data
     serializer = PropertySerializer(data=data)
     if serializer.is_valid():
-        property = serializer.save(uploader=user, uploader_user_type=user.user_type)
+        # Get the first user type for uploader_user_type
+        user_types = user.get_user_types()
+        uploader_user_type = user_types[0] if user_types else 'tenant'
+        property = serializer.save(uploader=user, uploader_user_type=uploader_user_type)
         return Response({"success": True, "message": "Property Successfully Added", "property_id": property.id}, status=201)
     else:
         return Response({"success": False, "message": "Property Not Added", "errors": serializer.errors}, status=400)
@@ -54,7 +57,7 @@ def update_property(request, property_id):
     Only landlords and agents can update properties.
     """
     user = request.user
-    if user.user_type not in ['landlord', 'agent']:
+    if not (user.has_user_type('landlord') or user.has_user_type('agent')):
         return Response({"message": "Invalid User Type"}, status=403)
     
     try:
@@ -98,7 +101,7 @@ def delete_property(request, property_id):
     Only landlords and agents can delete properties.
     """
     user = request.user
-    if user.user_type not in ['landlord', 'agent']:
+    if not (user.has_user_type('landlord') or user.has_user_type('agent')):
         return Response({"message": "Invalid User Type"}, status=403)
     
     try:

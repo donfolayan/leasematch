@@ -16,8 +16,6 @@ def apply_property_filters(qs, request):
     search = request.query_params.get('search')
     if search:
         qs = qs.filter(
-            Q(title__icontains=search) | 
-            Q(description__icontains=search) | 
             Q(city__icontains=search) | 
             Q(state__icontains=search) |
             Q(address__icontains=search) |

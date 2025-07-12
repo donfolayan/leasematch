@@ -30,16 +30,19 @@ class TestViews(TestSetup):
                 return '123456'
             return default
         mock_cache_get.side_effect = side_effect
-      
-        user=self.client.post(self.register_url, {
+
+        registration_payload = {
             "email": "test2@test.test",
             "username": "user2",
             "password": "password",
+            "confirm_password": "password",
             "first_name": "Test",
             "last_name": "User",
             "user_type": "tenant",
-        }, format='json')
-
+        }
+        user = self.client.post(self.register_url, registration_payload, format='json')
+        self.assertEqual(user.status_code, 201, f"Registration failed: {user.data}")
+        self.assertIn('user_id', user.data, f"user_id missing in registration response: {user.data}")
         user_id = str(user.data['user_id'])
 
         res=self.client.post(self.verify_otp_url, {
@@ -64,16 +67,19 @@ class TestViews(TestSetup):
                 return '123456'
             return default
         mock_cache_get.side_effect = side_effect
-      
-        user=self.client.post(self.register_url, {
+
+        registration_payload = {
             "email": "test2@test.test",
             "username": "user2",
             "password": "password",
+            "confirm_password": "password",
             "first_name": "Test",
             "last_name": "User",
             "user_type": "tenant",
-        }, format='json')
-
+        }
+        user = self.client.post(self.register_url, registration_payload, format='json')
+        self.assertEqual(user.status_code, 201, f"Registration failed: {user.data}")
+        self.assertIn('user_id', user.data, f"user_id missing in registration response: {user.data}")
         user_id = str(user.data['user_id'])
 
         res=self.client.post(self.verify_otp_url, {
@@ -85,15 +91,18 @@ class TestViews(TestSetup):
         self.assertEqual(res.status_code, 400)
 
     def test_user_can_resend_otp(self):
-        user=self.client.post(self.register_url, {
+        registration_payload = {
             "email": "test2@test.test",
             "username": "user2",
             "password": "password",
+            "confirm_password": "password",
             "first_name": "Test",
             "last_name": "User",
             "user_type": "tenant",
-        }, format='json')
-
+        }
+        user = self.client.post(self.register_url, registration_payload, format='json')
+        self.assertEqual(user.status_code, 201, f"Registration failed: {user.data}")
+        self.assertIn('user_id', user.data, f"user_id missing in registration response: {user.data}")
         user_id = str(user.data['user_id'])
 
         res=self.client.post(self.resend_otp_url, {
@@ -109,19 +118,18 @@ class TestViews(TestSetup):
         self.assertEqual(res.status_code, 400)
 
     def test_user_can_use_forgot_password(self):
-        user=self.client.post(self.register_url, {
+        registration_payload = {
             "email": "test4@test.test",
             "username": "user2",
             "password": "password",
+            "confirm_password": "password",
             "first_name": "Test",
             "last_name": "User",
             "user_type": "tenant",
-        }, format='json')
-
-        res=self.client.post(self.forgot_password_url, {
-            "email": "test4@test.test"
-        }, format='json')
-
+        }
+        user = self.client.post(self.register_url, registration_payload, format='json')
+        self.assertEqual(user.status_code, 201, f"Registration failed: {user.data}")
+        res = self.client.post(self.forgot_password_url, {"email": "test4@test.test"}, format='json')
         self.assertEqual(res.status_code, 200)
     
     def test_user_cannot_use_forgot_password_with_invalid_email(self):
@@ -131,5 +139,3 @@ class TestViews(TestSetup):
         }, format='json')
 
         self.assertEqual(res.status_code, 400)
-
-    

@@ -36,6 +36,7 @@ class TestSetup(APITestCase):
             "email": "test@test.test",
             "username": "user",
             "password": "password",
+            "confirm_password": "password",
             "first_name": "Test",
             "last_name": "User",
             "user_type": "tenant",

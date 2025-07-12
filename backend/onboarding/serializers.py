@@ -65,7 +65,7 @@ class AgentProfileSerializer(serializers.ModelSerializer):
         """
         if value is not None and not isinstance(value, str):
             raise serializers.ValidationError("Agency registration number must be a string.")
-        if len(value) < 5:
+        if value is not None and len(value) < 5:
             raise serializers.ValidationError("Agency registration number must be at least 5 characters long.")
         return value
 

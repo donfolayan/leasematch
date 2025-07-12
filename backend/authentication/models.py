@@ -4,7 +4,7 @@ from django.db import models
 from django.conf import settings
 from datetime import timedelta
 from onboarding.utils import USER_TYPE_CHOICES
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, UserManager
 from backend.utils.otp import generate_otp
 from django.utils.timezone import now
 
@@ -19,6 +19,14 @@ class UserType(models.Model):
     def __str__(self):
         return self.name
 
+class CustomUserManager(UserManager):
+    def create_user(self, username, email=None, password=None, **extra_fields):
+        if not email:
+            raise ValueError('The Email field must be set')
+        if not password:
+            raise ValueError('The Password field must be set')
+        return super().create_user(username, email=email, password=password, **extra_fields)
+
 class CustomUser(AbstractUser):
     user_type = models.ManyToManyField(UserType, related_name='users')
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -26,6 +34,8 @@ class CustomUser(AbstractUser):
     email = models.EmailField(max_length=254, unique=True, db_index=True)
     is_onboarded = models.BooleanField(default=False)
     onboarding_step = models.IntegerField(default=1)
+
+    objects = CustomUserManager()
     
     def add_user_type(self, user_type):
         try:
@@ -39,6 +49,14 @@ class CustomUser(AbstractUser):
         except Exception as e:
             logger.error(f"Error adding user type: {e}")
             return False
+
+    def has_user_type(self, user_type_name):
+        """Check if user has a specific user type."""
+        return self.user_type.filter(name=user_type_name).exists()
+
+    def get_user_types(self):
+        """Get list of user type names."""
+        return [ut.name for ut in self.user_type.all()]
 
 def default_scheduled_time():
     return now() + timedelta(days=7)

@@ -8,6 +8,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 import logging
+from rest_framework_simplejwt.exceptions import TokenError
 
 logger = logging.getLogger(__name__)
 
@@ -24,23 +25,23 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             res = Response()
             res.data = {'success': True, 'access': access_token, 'refresh': refresh_token}
 
-            res.set_cookie(
-                key='access_token',
-                value=access_token,
-                httponly=True,
-                secure=True,
-                samesite='None',
-                path='/',
-            )
+            # res.set_cookie(
+            #     key='access_token',
+            #     value=access_token,
+            #     httponly=True,
+            #     secure=True,
+            #     samesite='None',
+            #     path='/',
+            # )
 
-            res.set_cookie(
-                key='refresh_token',
-                value=refresh_token,
-                httponly=True,
-                secure=True,
-                samesite='None',
-                path='/',
-            )
+            # res.set_cookie(
+            #     key='refresh_token',
+            #     value=refresh_token,
+            #     httponly=True,
+            #     secure=True,
+            #     samesite='None',
+            #     path='/',
+            # )
 
             return res
         
@@ -50,7 +51,6 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 class CustomRefreshTokenView(TokenRefreshView):
     def post(self, request, *args, **kwargs):
-
         try:
             refresh_token = request.COOKIES.get('refresh_token')
             logger.debug(f"Refresh token from cookie: {refresh_token}")
@@ -59,11 +59,9 @@ class CustomRefreshTokenView(TokenRefreshView):
             request._full_data = request_data  # Patch the DRF request object
 
             response = super().post(request, *args, **kwargs)
-
             tokens = response.data
             access_token = tokens.get('access')
             new_refresh_token = tokens.get('refresh')
-            
 
             res = Response()
             res.data = {'refreshed': True, 'access': access_token}
@@ -89,10 +87,12 @@ class CustomRefreshTokenView(TokenRefreshView):
                 )
 
             return res
-        
+        except TokenError as e:
+            logger.error(f"Token error in CustomRefreshTokenView: {str(e)}")
+            return Response({'refreshed': False, 'message': str(e)}, status=400)
         except Exception as e:
             logger.error(f"Error in CustomRefreshTokenView: {str(e)}")
-            return Response({'refreshed': False})
+            return Response({'refreshed': False, 'message': str(e)}, status=400)
         
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -103,13 +103,14 @@ def logout(request):
             return Response({"success": False, 
                              "message": "Refresh token not provided."}, 
                              status=400)
-        
-        token = RefreshToken(refresh_token)
-        token.blacklist()
+        try:
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+        except TokenError as e:
+            return Response({"success": False, "message": str(e)}, status=400)
         res = Response({"success": True, 
                         "message": "Successfully logged out."}, 
                         status=200)
-        #clear cookies
         res.delete_cookie('access_token', path='/')
         res.delete_cookie('refresh_token', path='/')
         return res

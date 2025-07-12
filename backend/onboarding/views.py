@@ -14,7 +14,7 @@ def update_agent_profile(request):
     Endpoint to update agent profile.
     """
     user = request.user
-    if user.user_type != 'agent':
+    if not user.has_user_type('agent'):
         return Response({"message": "Invalid User Type"}, 
                         status=403)
     data = request.data
@@ -40,7 +40,7 @@ def update_landlord_profile(request):
     Endpoint to update landlord profile.
     """
     user = request.user
-    if user.user_type != 'landlord':
+    if not user.has_user_type('landlord'):
         return Response({"message": "Invalid User Type"}, status=403)
     landlord_profile = user.landlord_profile
     serializer = LandlordProfileSerializer(landlord_profile, 
@@ -70,7 +70,7 @@ def update_tenant_profile(request):
     Endpoint to update tenant profile.
     """
     user = request.user
-    if user.user_type != 'tenant':
+    if not user.has_user_type('tenant'):
         return Response({"message": "Invalid User Type"}, 
                         status=403)
     data = request.data
@@ -92,7 +92,8 @@ def update_tenant_profile(request):
 @permission_classes([IsAuthenticated])
 def get_onboarding_status(request):
     user = request.user
-    user_type = user.user_type
+    user_types = user.get_user_types()
+    user_type = user_types[0] if user_types else 'tenant'
     current_step = user.onboarding_step
 
     steps = ONBOARDING_STEPS.get(user_type, {})
@@ -125,8 +126,10 @@ def update_onboarding_step(request):
 @permission_classes([IsAuthenticated])
 def complete_onboarding(request):
     user = request.user
+    user_types = user.get_user_types()
+    user_type = user_types[0] if user_types else 'tenant'
     
-    if user.onboarding_step != max(ONBOARDING_STEPS[user.user_type].keys()):
+    if user.onboarding_step != max(ONBOARDING_STEPS[user_type].keys()):
         return Response({"success": False, 
                          "message": "Onboarding not complete."}, 
                          status=400)
@@ -143,8 +146,11 @@ def skip_onboarding(request):
     Function to skip onboarding for a user.
     """
     user = request.user
+    user_types = user.get_user_types()
+    user_type = user_types[0] if user_types else 'tenant'
+    
     user.is_onboarded = False
-    user.onboarding_step = max(ONBOARDING_STEPS[user.user_type].keys())
+    user.onboarding_step = max(ONBOARDING_STEPS[user_type].keys())
     user.save()
     return Response({"success": True, 
                      "message": "Onboarding skipped successfully."}, 
