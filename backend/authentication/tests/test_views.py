@@ -30,7 +30,7 @@ class TestViews(TestSetup):
                 return '123456'
             return default
         mock_cache_get.side_effect = side_effect
-
+      
         registration_payload = {
             "email": "test2@test.test",
             "username": "user2",
@@ -67,7 +67,7 @@ class TestViews(TestSetup):
                 return '123456'
             return default
         mock_cache_get.side_effect = side_effect
-
+      
         registration_payload = {
             "email": "test2@test.test",
             "username": "user2",

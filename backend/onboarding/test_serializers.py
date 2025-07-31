@@ -6,7 +6,11 @@ User = get_user_model()
 
 class SerializerTests(APITestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='testpassword')
+        self.user = User.objects.create_user(
+            username='testuser',
+            email='testuser@example.com',
+            password='testpassword'
+        )
 
     def test_agent_profile_serializer_valid_data(self):
         """Test AgentProfileSerializer with valid data."""
